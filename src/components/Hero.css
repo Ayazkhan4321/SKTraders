@@ -1,0 +1,111 @@
+/* Razorpay-Style Hero Section Styles */
+.rzp-hero-section {
+  position: relative;
+  width: 100%;
+  min-h: 90vh;
+  background-color: #ffffff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-top: 5rem;
+  padding-bottom: 2rem;
+  user-select: none;
+}
+
+/* Background Ambient Glow Beam */
+.rzp-hero-mesh-glow {
+  position: absolute;
+  top: -10%;
+  right: -5%;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(219, 234, 254, 0.1) 40%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Slide Arrows */
+.rzp-slide-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 40;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #2b64f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+  transition: all 200ms ease;
+  cursor: pointer;
+}
+
+.rzp-slide-arrow:hover {
+  background-color: #eff6ff;
+  border-color: #2b64f6;
+  transform: translateY(-50%) scale(1.08);
+}
+
+.rzp-slide-arrow.left {
+  left: 1rem;
+}
+
+.rzp-slide-arrow.right {
+  right: 1rem;
+}
+
+@media (min-width: 1280px) {
+  .rzp-slide-arrow.left {
+    left: 2rem;
+  }
+  .rzp-slide-arrow.right {
+    right: 2rem;
+  }
+}
+
+/* Floating Gold Seal Badge */
+.rzp-gold-badge {
+  background: linear-gradient(135deg, #facc15 0%, #eab308 50%, #ca8a04 100%);
+  box-shadow: 0 10px 25px rgba(202, 138, 4, 0.35);
+}
+
+/* Bottom Floating Finder Bar */
+.rzp-finder-bar {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+  border-radius: 1.25rem;
+}
+
+.rzp-finder-pill {
+  @apply px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 border;
+}
+
+.rzp-finder-pill.active {
+  @apply bg-blue-50 text-blue-700 border-blue-200 font-bold shadow-sm;
+}
+
+.rzp-finder-pill.inactive {
+  @apply bg-slate-50 text-slate-700 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200;
+}
+
+/* Subtle Drone Camera & Pulse Animations */
+@keyframes pulseSubtle {
+  0%, 100% {
+    transform: scale(1.05);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 12s ease-in-out infinite alternate;
+}
+

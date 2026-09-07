@@ -1,0 +1,53 @@
+/* Cinematic Hero Video CSS Animations */
+
+@keyframes panZoom {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  100% {
+    transform: scale(1.08) translate(-1%, -1%);
+  }
+}
+
+@keyframes panUp {
+  0% {
+    transform: scale(1) translateY(2%);
+  }
+  100% {
+    transform: scale(1.06) translateY(-2%);
+  }
+}
+
+@keyframes zoomIn {
+  0% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes panRight {
+  0% {
+    transform: scale(1) translateX(-1.5%);
+  }
+  100% {
+    transform: scale(1.05) translateX(1.5%);
+  }
+}
+
+.animate-pan-zoom {
+  animation: panZoom 4s ease-out infinite alternate;
+}
+
+.animate-pan-up {
+  animation: panUp 3s ease-out infinite alternate;
+}
+
+.animate-zoom-in {
+  animation: zoomIn 4s ease-out infinite alternate;
+}
+
+.animate-pan-right {
+  animation: panRight 4s ease-out infinite alternate;
+}

@@ -1,0 +1,24 @@
+/* Razorpay-Style Navbar Header */
+.rzp-navbar-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e2e8f0;
+  transition: all 200ms ease-in-out;
+}
+
+.rzp-nav-link {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+  transition: color 150ms ease;
+}
+
+.rzp-nav-link:hover {
+  color: #2b64f6;
+}

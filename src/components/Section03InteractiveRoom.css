@@ -1,0 +1,51 @@
+/* Section03InteractiveRoom Light Green Bubble Styles & Animations */
+.interactive-room-section {
+  position: relative;
+}
+
+@keyframes floatBubble1 {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-25px) scale(1.08);
+  }
+}
+
+@keyframes floatBubble2 {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) scale(1);
+  }
+  50% {
+    transform: translateY(30px) translateX(-20px) scale(1.12);
+  }
+}
+
+@keyframes floatBubble3 {
+  0%, 100% {
+    transform: scale(0.95) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.05) rotate(15deg);
+  }
+}
+
+.animate-float-bubble-1 {
+  animation: floatBubble1 8s ease-in-out infinite alternate;
+}
+
+.animate-float-bubble-2 {
+  animation: floatBubble2 10s ease-in-out infinite alternate;
+}
+
+.animate-float-bubble-3 {
+  animation: floatBubble3 12s ease-in-out infinite alternate;
+}
+
+/* Light Green Glowing Glass Orbs */
+.light-green-orb {
+  background: radial-gradient(circle at 30% 30%, rgba(132, 204, 22, 0.45), rgba(16, 185, 129, 0.25) 60%, rgba(0, 230, 118, 0.1) 100%);
+  box-shadow: 0 0 40px rgba(0, 230, 118, 0.35), inset 0 0 25px rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(132, 204, 22, 0.4);
+}

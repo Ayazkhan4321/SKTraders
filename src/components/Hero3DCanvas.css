@@ -1,0 +1,6 @@
+/* Hero3DCanvas Styles */
+.hero-3d-canvas-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}

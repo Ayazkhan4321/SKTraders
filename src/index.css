@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    color-scheme: light;
+  }
+  
+  body {
+    @apply bg-white text-slate-900 font-sans antialiased overflow-x-hidden selection:bg-[#00e676] selection:text-black;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #00e676;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00c853;
+}
+
+/* Hide default scrollbars for horizontal panels */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Signify Green Button & Utility Classes */
+.btn-signify-green {
+  @apply bg-[#00e676] hover:bg-[#00c853] text-slate-950 font-semibold px-6 py-3 rounded-none transition-all duration-300 inline-flex items-center gap-2 text-sm tracking-wide shadow-sm hover:shadow-md active:scale-95;
+}
+
+.btn-signify-outline {
+  @apply border border-slate-900 hover:border-[#00e676] hover:bg-slate-900 hover:text-white text-slate-900 font-semibold px-6 py-3 rounded-none transition-all duration-300 inline-flex items-center gap-2 text-sm tracking-wide active:scale-95;
+}
+
+.signify-card {
+  @apply relative overflow-hidden transition-all duration-500 ease-out hover:-translate-y-1.5;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* JS Reveal-on-Scroll animations */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-on-scroll.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
