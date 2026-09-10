@@ -10,7 +10,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Pause,
-  Play
+  Play,
+  FileText,
+  ExternalLink
 } from 'lucide-react';
 import './CircularSolutionsCarousel.css';
 
@@ -28,6 +30,7 @@ export interface SolutionCard {
   image: string;
   icon: React.ReactNode;
   categoryTag: string;
+  pdfUrl?: string;
 }
 
 const ALL_SOLUTIONS: SolutionCard[] = [
@@ -40,7 +43,8 @@ const ALL_SOLUTIONS: SolutionCard[] = [
     badgeBorder: 'border-[#0066FF]',
     image: '/images/card_ceiling_design_lights.jpg',
     icon: <Sparkles className="w-5 h-5 text-white" />,
-    categoryTag: 'Ceiling Lighting'
+    categoryTag: 'Ceiling Lighting',
+    pdfUrl: '/catalogues/Home Decorative Lighting catalogue - Year 2025 - Final.pdf'
   },
   {
     id: 'fans',
@@ -51,7 +55,8 @@ const ALL_SOLUTIONS: SolutionCard[] = [
     badgeBorder: 'border-[#7CB342]',
     image: '/images/card_fans.jpg',
     icon: <Fan className="w-5 h-5 text-white" />,
-    categoryTag: 'Decorative Fans'
+    categoryTag: 'Decorative Fans',
+    pdfUrl: '/catalogues/Fans Catalogue 2026.pdf'
   },
   {
     id: 'smart-led-bulbs',
@@ -62,7 +67,8 @@ const ALL_SOLUTIONS: SolutionCard[] = [
     badgeBorder: 'border-[#9333EA]',
     image: '/images/card_smart_led_bulb.jpg',
     icon: <Lightbulb className="w-5 h-5 text-white" />,
-    categoryTag: 'Smart Hue Lighting'
+    categoryTag: 'Smart Hue Lighting',
+    pdfUrl: '/catalogues/Philips Trade Catalogue 2024-25.pdf'
   },
   {
     id: 'modern-led-lighting',
@@ -207,7 +213,13 @@ export default function CircularSolutionsCarousel({ onOpenQuote }: CircularSolut
           {duplicatedSolutions.map((solution, idx) => (
             <div
               key={`${solution.id}-${idx}`}
-              onClick={() => onOpenQuote(solution.title)}
+              onClick={() => {
+                if (solution.pdfUrl) {
+                  window.open(solution.pdfUrl, '_blank', 'noopener,noreferrer');
+                } else {
+                  onOpenQuote(solution.title);
+                }
+              }}
               className="flex-shrink-0 w-[270px] sm:w-[290px] bg-white rounded-2xl overflow-hidden border border-slate-200/90 shadow-md hover:shadow-2xl transition-all duration-300 flex flex-col group cursor-pointer transform hover:-translate-y-2.5 relative"
             >
               {/* Card Image */}
@@ -230,12 +242,24 @@ export default function CircularSolutionsCarousel({ onOpenQuote }: CircularSolut
 
                 {/* Title and Subtitle */}
                 <div className="pt-8 flex flex-col flex-grow">
-                  <h3 className={`font-extrabold text-base sm:text-lg mb-1.5 leading-snug ${solution.titleColor} group-hover:opacity-90`}>
-                    {solution.title}
+                  <h3 className={`font-extrabold text-base sm:text-lg mb-1.5 leading-snug ${solution.titleColor} group-hover:opacity-90 flex items-center justify-between`}>
+                    <span>{solution.title}</span>
+                    {solution.pdfUrl && (
+                      <ExternalLink className="w-4 h-4 text-blue-600 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                    )}
                   </h3>
                   <p className="text-slate-600 text-xs sm:text-sm font-normal leading-relaxed">
                     {solution.subtitle}
                   </p>
+
+                  {/* Direct Link indicator for PDF open */}
+                  {solution.pdfUrl && (
+                    <div className="mt-3.5 pt-2.5 border-t border-slate-100 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 group-hover:text-blue-700 transition-colors">
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Click to Open PDF in Browser</span>
+                      <ExternalLink className="w-3 h-3 ml-auto" />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -58,8 +58,40 @@ export interface UserProfile {
   isAdmin: boolean;
 }
 
+export const CEILING_LIGHTS_PDF_URL = '/catalogues/Home Decorative Lighting catalogue - Year 2025 - Final.pdf';
+
 // Initial Mock Seed Data
 const INITIAL_CATALOGUES: CatalogueItem[] = [
+  {
+    id: 'cat-ceiling-linear-2025',
+    title: 'Philips Ceiling & Linear Lighting Catalogue 2025-2026',
+    category: 'Residential',
+    fileUrl: '/catalogues/Home Decorative Lighting catalogue - Year 2025 - Final.pdf',
+    imageUrl: '/images/card_ceiling_design_lights.jpg',
+    description: 'Official 22-page Philips Ceiling & Linear Lighting Catalogue featuring LineaBright, LineaGlow, ColorMagic 3-in-1, ProGlow Nxt, Sharp COB, Aura StylEdge, and DuraSlim ceiling lights.',
+    pageCount: 22,
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'cat-fans-2026',
+    title: 'Philips Decorative & Smart Fans Master Catalogue 2026',
+    category: 'Residential',
+    fileUrl: '/catalogues/Fans Catalogue 2026.pdf',
+    imageUrl: '/images/card_fans.jpg',
+    description: 'Official Philips Premium Decorative & Smart Fans 2026 Master Specification Catalogue featuring silent BLDC technology, modern aesthetics, and energy-efficient airflow.',
+    pageCount: 48,
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'cat-trade-2025',
+    title: 'Philips Trade & Smart LED Lighting Catalogue 2024-25',
+    category: 'Commercial & Retail',
+    fileUrl: '/catalogues/Philips Trade Catalogue 2024-25.pdf',
+    imageUrl: '/images/card_smart_led_bulb.jpg',
+    description: 'Official Philips Trade & Professional Specification Catalogue featuring smart LED bulbs, WiZ connected lighting, commercial troffers, and retail spotlights.',
+    pageCount: 64,
+    updatedAt: new Date().toISOString(),
+  },
   {
     id: 'cat-res-2025',
     title: 'Philips Home Lighting Collection 2025',
@@ -151,11 +183,39 @@ export function saveLocalOrders(orders: PaymentOrderRecord[]) {
 // Supabase Async API wrapper functions with fallback support
 export async function apiFetchCatalogues(): Promise<CatalogueItem[]> {
   try {
+    // Sync default ceiling & fans catalogues to Supabase table if missing
+    try {
+      await supabase.from('catalogues').upsert([
+        {
+          id: INITIAL_CATALOGUES[0].id,
+          title: INITIAL_CATALOGUES[0].title,
+          category: INITIAL_CATALOGUES[0].category,
+          file_url: INITIAL_CATALOGUES[0].fileUrl,
+          image_url: INITIAL_CATALOGUES[0].imageUrl,
+          description: INITIAL_CATALOGUES[0].description,
+          page_count: INITIAL_CATALOGUES[0].pageCount,
+          updated_at: INITIAL_CATALOGUES[0].updatedAt,
+        },
+        {
+          id: INITIAL_CATALOGUES[1].id,
+          title: INITIAL_CATALOGUES[1].title,
+          category: INITIAL_CATALOGUES[1].category,
+          file_url: INITIAL_CATALOGUES[1].fileUrl,
+          image_url: INITIAL_CATALOGUES[1].imageUrl,
+          description: INITIAL_CATALOGUES[1].description,
+          page_count: INITIAL_CATALOGUES[1].pageCount,
+          updated_at: INITIAL_CATALOGUES[1].updatedAt,
+        }
+      ]);
+    } catch (e) {
+      // ignore table write errors
+    }
+
     const { data, error } = await supabase.from('catalogues').select('*').order('created_at', { ascending: false });
     if (error || !data || data.length === 0) {
       return getLocalCatalogues();
     }
-    return data.map((item: any) => ({
+    const list = data.map((item: any) => ({
       id: item.id || item.title,
       title: item.title,
       category: item.category,
@@ -165,6 +225,14 @@ export async function apiFetchCatalogues(): Promise<CatalogueItem[]> {
       pageCount: item.page_count || 50,
       updatedAt: item.updated_at || new Date().toISOString(),
     }));
+
+    if (!list.some((c: any) => c.id === 'cat-fans-2026')) {
+      list.unshift(INITIAL_CATALOGUES[1]);
+    }
+    if (!list.some((c: any) => c.id === 'cat-ceiling-linear-2025')) {
+      list.unshift(INITIAL_CATALOGUES[0]);
+    }
+    return list;
   } catch (err) {
     return getLocalCatalogues();
   }
