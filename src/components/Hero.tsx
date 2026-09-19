@@ -14,7 +14,7 @@ export default function Hero({ onOpenQuote }: HeroProps) {
       <CinematicHeroVideo onOpenQuote={onOpenQuote} />
 
       {/* 2. "Our Lighting Solutions - Designed for Every Space" Circular Moving Cards (7 Cards total) */}
-      <CircularSolutionsCarousel onOpenQuote={onOpenQuote} />
+
     </section>
   );
 }

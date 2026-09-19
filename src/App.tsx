@@ -17,7 +17,8 @@ import FeaturePagesManagement from './admin/pages/FeaturePagesManagement';
 import FeaturePageEditor from './admin/pages/FeaturePageEditor';
 import { AdminProductsManagement } from './admin/pages/AdminProductsManagement';
 import { AdminProductEditor } from './admin/pages/AdminProductEditor';
-
+import ProductSearchSection from './components/ProductSearchSection';
+import CircularSolutionsCarousel from './components/CircularSolutionsCarousel';
 // Public Website Pages & Components
 import FeatureDetailPage from './pages/FeatureDetailPage';
 import { ApplicationsPage } from './pages/ApplicationsPage';
@@ -175,8 +176,9 @@ function PublicWebsite() {
       />
 
       <Hero onOpenQuote={() => handleOpenQuote()} />
-
+      <ProductSearchSection />
       <SectionResources onOpenQuote={() => handleOpenQuote()} />
+      <CircularSolutionsCarousel onOpenQuote={() => handleOpenQuote} />
 
       <SectionBrandGrid onOpenQuote={() => handleOpenQuote()} />
 
