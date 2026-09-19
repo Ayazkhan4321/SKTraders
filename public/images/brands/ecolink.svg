@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <!-- EcoLink Leaf Arc Emblem -->
+  <g transform="translate(4, 6)">
+    <path d="M8 24C8 13 17 4 28 4c0 11-9 20-20 20z" fill="#10B981"/>
+    <path d="M28 24c0 11-9 20-20 20 0-11 9-20 20-20z" fill="#059669"/>
+    <path d="M8 24c6-4 14-4 20 0" stroke="#FFFFFF" stroke-width="2" fill="none"/>
+  </g>
+  <!-- EcoLink Wordmark -->
+  <text x="48" y="32" fill="#064E3B" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="28" letter-spacing="-0.5">EcoLink</text>
+</svg>

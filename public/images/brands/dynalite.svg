@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <!-- Geometric D Icon -->
+  <g transform="translate(6, 6)">
+    <rect width="32" height="32" rx="8" fill="#0284C7"/>
+    <path d="M11 10h6c5 0 9 4 9 9s-4 9-9 9h-6V10z" fill="#FFFFFF"/>
+    <path d="M15 14h2c2.5 0 4.5 2 4.5 4.5S19.5 23 17 23h-2V14z" fill="#0284C7"/>
+  </g>
+  <!-- Dynalite Wordmark -->
+  <text x="48" y="32" fill="#0F172A" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="26" letter-spacing="-0.5">dynalite</text>
+</svg>

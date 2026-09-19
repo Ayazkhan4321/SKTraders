@@ -1,0 +1,13 @@
+# www.robotstxt.org/
+# SK Traders - Authorized Philips Lighting Products & Solutions Distributor
+
+User-agent: *
+Allow: /
+
+# Exclude Admin CMS System from Search Indexes
+Disallow: /admin
+Disallow: /admin/
+Disallow: /admin/*
+
+# Sitemap declaration
+Sitemap: https://www.sktradersphilipslighting.com/sitemap.xml

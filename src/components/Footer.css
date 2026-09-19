@@ -1,4 +1,27 @@
-/* Footer Styles */
+/* Footer & Brand Marquee Reel Styles */
 .footer-section {
   position: relative;
+}
+
+@keyframes brandMarquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-brand-marquee {
+  display: flex;
+  width: max-content;
+  animation: brandMarquee 28s linear infinite;
+}
+
+.animate-brand-marquee:hover {
+  animation-play-state: paused;
+}
+
+.brand-marquee-paused {
+  animation-play-state: paused !important;
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { COMPANY_INFO } from '@/lib/data';
 import { Sparkles, Phone, Mail, MapPin, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import FooterBrandLogos from './FooterBrandLogos';
 import './Footer.css';
 
 export default function Footer() {
@@ -16,11 +17,15 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="relative bg-slate-950 text-white pt-20 pb-10 border-t border-slate-800 overflow-hidden">
-      {/* Background Glow */}
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#00e676]/10 rounded-full blur-[180px] pointer-events-none"></div>
+    <footer className="relative bg-slate-950 text-white border-t border-slate-800 overflow-hidden">
+      {/* Global Brands Section - Light Background Band */}
+      <FooterBrandLogos />
 
-      <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
+      {/* Main Footer Container */}
+      <div className="max-w-7xl mx-auto px-6 md:px-12 pt-12 pb-10 relative z-10 space-y-12">
+        {/* Background Glow */}
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#00e676]/10 rounded-full blur-[180px] pointer-events-none"></div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 pb-16 border-b border-slate-800">
           {/* Col 1: Logo & Vision */}
           <div className="lg:col-span-5 flex flex-col items-start gap-6">

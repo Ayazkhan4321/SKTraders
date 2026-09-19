@@ -1,35 +1,82 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '@/components/Navbar';
-import Hero from '@/components/Hero';
-import SectionResources from '@/components/SectionResources';
-import SectionBrandGrid from '@/components/SectionBrandGrid';
-import SectionLeadingBrands from '@/components/SectionLeadingBrands';
-import SectionHighlightsCarousel from '@/components/SectionHighlightsCarousel';
-import SectionProfessionalOfferings from '@/components/SectionProfessionalOfferings';
-import SectionCatalogues from '@/components/SectionCatalogues';
-import Section03InteractiveRoom from '@/components/Section03InteractiveRoom';
-import Section05FeaturedProducts from '@/components/Section05FeaturedProducts';
-import Section07Projects from '@/components/Section07Projects';
-import Section10Contact from '@/components/Section10Contact';
-import Footer from '@/components/Footer';
-import FloatingContactButtons from '@/components/FloatingContactButtons';
-import CustomCursor from '@/components/CustomCursor';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
+// Admin CMS Context, Layout & Pages
+import { AdminAuthProvider } from './admin/context/AdminAuthContext';
+import ProtectedAdminRoute from './admin/components/ProtectedAdminRoute';
+import AdminLayout from './admin/components/AdminLayout';
+import AdminLogin from './admin/pages/AdminLogin';
+import Dashboard from './admin/pages/Dashboard';
+import HeroManagement from './admin/pages/HeroManagement';
+import HeroCardsManagement from './admin/pages/HeroCardsManagement';
+import CertificatesManagement from './admin/pages/CertificatesManagement';
+import BrandLogosManagement from './admin/pages/BrandLogosManagement';
+import LeadingBrandsManagement from './admin/pages/LeadingBrandsManagement';
+import ApplicationsManagement from './admin/pages/ApplicationsManagement';
+import FeaturePagesManagement from './admin/pages/FeaturePagesManagement';
+import FeaturePageEditor from './admin/pages/FeaturePageEditor';
+import { AdminProductsManagement } from './admin/pages/AdminProductsManagement';
+import { AdminProductEditor } from './admin/pages/AdminProductEditor';
+
+// Public Website Pages & Components
+import FeatureDetailPage from './pages/FeatureDetailPage';
+import { ApplicationsPage } from './pages/ApplicationsPage';
+import ApplicationDetailPage from './pages/ApplicationDetailPage';
+import { ProductsPage } from './pages/ProductsPage';
+import { ProductDetailPage } from './pages/ProductDetailPage';
+import Navbar from './components/Navbar';
+import Hero from './components/Hero';
+import SectionResources from './components/SectionResources';
+import SectionBrandGrid from './components/SectionBrandGrid';
+import SectionLeadingBrands from './components/SectionLeadingBrands';
+import SectionHighlightsCarousel from './components/SectionHighlightsCarousel';
+import SectionProfessionalOfferings from './components/SectionProfessionalOfferings';
+import Section03InteractiveRoom from './components/Section03InteractiveRoom';
+import Section05FeaturedProducts from './components/Section05FeaturedProducts';
+import Section07Projects from './components/Section07Projects';
+import Section10Contact from './components/Section10Contact';
+import Footer from './components/Footer';
+import FloatingContactButtons from './components/FloatingContactButtons';
+import CustomCursor from './components/CustomCursor';
+import SEOHead from './components/SEOHead';
 import Lenis from 'lenis';
 
 // Modals
-import QuoteModal from '@/components/QuoteModal';
-import CatalogueModal from '@/components/CatalogueModal';
-import AuthModal from '@/components/AuthModal';
-import { CatalogueItem } from '@/lib/supabase';
+import QuoteModal from './components/QuoteModal';
+import CatalogueModal from './components/CatalogueModal';
+import AuthModal from './components/AuthModal';
+import { CatalogueItem } from './lib/supabase';
 
-export default function App() {
-  // Modal Visibility States
+function PublicLayout({ children }: { children: React.ReactNode }) {
+  const [quoteModalOpen, setQuoteModalOpen] = useState(false);
+  const [selectedQuoteProduct, setSelectedQuoteProduct] = useState<string>('');
+
+  const handleOpenQuote = (productName?: string) => {
+    setSelectedQuoteProduct(productName || '');
+    setQuoteModalOpen(true);
+  };
+
+  return (
+    <div className="relative min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-amber-500 selection:text-slate-950">
+      <Navbar onOpenQuote={() => handleOpenQuote()} />
+      {children}
+      <Footer />
+      <FloatingContactButtons />
+      <QuoteModal
+        isOpen={quoteModalOpen}
+        onClose={() => setQuoteModalOpen(false)}
+        initialProductName={selectedQuoteProduct}
+      />
+    </div>
+  );
+}
+
+function PublicWebsite() {
   const [quoteModalOpen, setQuoteModalOpen] = useState(false);
   const [selectedQuoteProduct, setSelectedQuoteProduct] = useState<string>('');
   const [catalogueModalItem, setCatalogueModalItem] = useState<CatalogueItem | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
-  // User State
   const [currentUser, setCurrentUser] = useState<{
     name: string;
     email: string;
@@ -38,9 +85,7 @@ export default function App() {
     isAdmin?: boolean;
   } | null>(null);
 
-  // Initialize Lenis Smooth Scrolling Physics & Intersection Observer Reveal Animations
   useEffect(() => {
-    // 1. Lenis Smooth Scrolling
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -53,7 +98,6 @@ export default function App() {
     }
     animationFrameId = requestAnimationFrame(raf);
 
-    // 2. JS Intersection Observer for Scroll Reveal Animations
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -68,14 +112,13 @@ export default function App() {
     const revealElements = document.querySelectorAll('section, .reveal-on-scroll');
     revealElements.forEach((el) => observer.observe(el));
 
-    // 3. Load User Session from LocalStorage
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('sk_user_session');
       if (stored) {
         try {
           setCurrentUser(JSON.parse(stored));
         } catch (e) {
-          // ignore error
+          // ignore
         }
       }
     }
@@ -104,7 +147,6 @@ export default function App() {
     setCurrentUser(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('sk_user_session');
-      localStorage.removeItem('sk_admin_authenticated');
     }
   };
 
@@ -119,7 +161,12 @@ export default function App() {
 
   return (
     <main className="relative min-h-screen bg-white text-slate-900 overflow-hidden selection:bg-[#00e676] selection:text-black font-sans">
-      {/* 1. Signify Navigation Header */}
+      <SEOHead
+        title="Authorized Philips Lighting Distributor in Hyderabad | Home"
+        description="SK Traders is Hyderabad's premier authorized distributor of authentic Philips & Signify Lighting products. Complete residential, hospital cleanroom, commercial floodlights, and smart BLDC fans."
+        canonicalPath="/"
+        keywords="SK Traders, Philips Lighting Hyderabad, Authorized Philips Distributor, Signify Lighting, COB Downlights, BLDC Fans Hyderabad"
+      />
       <Navbar
         onOpenQuote={() => handleOpenQuote()}
         onOpenAuth={() => setAuthModalOpen(true)}
@@ -127,47 +174,32 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      {/* 2. Signify Video Hero Section (Screenshot 1 Top: "Brighter Lives Better World") */}
       <Hero onOpenQuote={() => handleOpenQuote()} />
 
-      {/* 3. Resources for Lighting Professionals (Screenshot 1 Bottom) */}
       <SectionResources onOpenQuote={() => handleOpenQuote()} />
 
-      {/* 4. Brand Cards: PHILIPS, PHILIPS hue, COLOR KINETICS (Screenshot 2) */}
       <SectionBrandGrid onOpenQuote={() => handleOpenQuote()} />
 
-      {/* 5. The World's Leading Lighting Brands: Signify, Interact, Dynalite (Screenshot 3) */}
       <SectionLeadingBrands onOpenQuote={() => handleOpenQuote()} />
 
-      {/* 6. Signify Highlights Carousel (Screenshot 4) */}
       <SectionHighlightsCarousel onOpenQuote={() => handleOpenQuote()} />
 
-      {/* 7. Explore Signify's Professional Offerings: Products & Applications (Screenshot 5) */}
       <SectionProfessionalOfferings onOpenQuote={() => handleOpenQuote()} />
 
-
-      {/* 9. Interactive Room Lighting Simulator */}
       <Section03InteractiveRoom />
 
-      {/* 10. Featured Philips & Signify Lighting Products */}
       <Section05FeaturedProducts onOpenQuote={handleOpenQuote} />
 
-      {/* 11. Project Showcase Gallery */}
       <Section07Projects onOpenQuote={() => handleOpenQuote()} />
 
-      {/* 12. Contact CTA, Form & Showroom Location Map */}
       <Section10Contact onOpenQuote={() => handleOpenQuote()} />
 
-      {/* Footer */}
       <Footer />
 
-      {/* Floating WhatsApp & Phone Call Buttons */}
       <FloatingContactButtons />
 
-      {/* Custom JS Glowing Cursor */}
       <CustomCursor />
 
-      {/* Modals */}
       <QuoteModal
         isOpen={quoteModalOpen}
         onClose={() => setQuoteModalOpen(false)}
@@ -186,5 +218,78 @@ export default function App() {
         onSuccessLogin={handleUserLoginSuccess}
       />
     </main>
+  );
+}
+
+export default function App() {
+  return (
+    <AdminAuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Website Main Route */}
+          <Route path="/" element={<PublicWebsite />} />
+          <Route path="/features/:slug" element={<FeatureDetailPage />} />
+          <Route path="/applications" element={<ApplicationsPage />} />
+          <Route path="/applications/:slug" element={<ApplicationDetailPage />} />
+
+          {/* Product Catalogue Routes */}
+          <Route
+            path="/products"
+            element={
+              <PublicLayout>
+                <ProductsPage />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/products/:category"
+            element={
+              <PublicLayout>
+                <ProductsPage />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/products/detail/:slug"
+            element={
+              <PublicLayout>
+                <ProductDetailPage />
+              </PublicLayout>
+            }
+          />
+
+          {/* Admin Login Route */}
+          <Route path="/admin" element={<AdminLogin />} />
+
+          {/* Protected Admin CMS Routes */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedAdminRoute>
+                <AdminLayout />
+              </ProtectedAdminRoute>
+            }
+          >
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="products" element={<AdminProductsManagement />} />
+            <Route path="products/new" element={<AdminProductEditor />} />
+            <Route path="products/edit/:id" element={<AdminProductEditor />} />
+            <Route path="hero" element={<HeroManagement />} />
+            <Route path="hero-cards" element={<HeroCardsManagement />} />
+            <Route path="features" element={<FeaturePagesManagement />} />
+            <Route path="features/new" element={<FeaturePageEditor />} />
+            <Route path="features/edit/:id" element={<FeaturePageEditor />} />
+            <Route path="brands" element={<LeadingBrandsManagement />} />
+            <Route path="applications" element={<ApplicationsManagement />} />
+            <Route path="certificates" element={<CertificatesManagement />} />
+            <Route path="footer-brands" element={<BrandLogosManagement />} />
+          </Route>
+
+          {/* Catch-all redirect to Admin or Public */}
+          <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AdminAuthProvider>
   );
 }
