@@ -34,9 +34,8 @@ export default function Navbar({
 
   const navLinks = [
     { name: 'Applications', href: '/#offerings' },
+    { name: 'Catalogues', href: '/#every-space' },
     { name: 'Resources', href: '/#resources' },
-    { name: 'Sustainability', href: '/#hero' },
-    { name: 'Highlights', href: '/#highlights' },
     { name: 'Contact', href: '/#contact' },
   ];
 
@@ -50,9 +49,9 @@ export default function Navbar({
         {/* Left: SK Traders Logo linking strictly to "/" */}
         <Link to="/" className="flex items-center gap-3 group shrink-0" title="SK Traders Homepage">
           <img
-            src="/favicon.svg"
+            src="/images/sk_traders_logo.png"
             alt="SK Traders Eagle Logo"
-            className="w-9 h-9 sm:w-10 sm:h-10 object-contain drop-shadow transition-transform group-hover:scale-108"
+            className="w-10 h-10 sm:w-11 sm:h-11 object-contain drop-shadow transition-transform group-hover:scale-108"
           />
           <img
             src="/images/philips_home_lighting_logo.png"
@@ -103,16 +102,8 @@ export default function Navbar({
           ))}
         </nav>
 
-        {/* Right Actions: Search, User, CTA */}
+        {/* Right Actions: User, CTA */}
         <div className="hidden sm:flex items-center gap-4">
-          <Link
-            to="/products"
-            className="p-2 text-slate-700 hover:text-[#00c853] transition-colors"
-            title="Search Products Catalogue"
-          >
-            <Search className="w-4 h-4" />
-          </Link>
-
           <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 rounded text-xs font-semibold text-slate-700 border border-slate-200">
             <Globe className="w-3.5 h-3.5 text-slate-500" />
             <span className="text-[11px] font-bold">IN | EN</span>

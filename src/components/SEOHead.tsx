@@ -11,9 +11,9 @@ export interface SEOHeadProps {
 }
 
 const DEFAULT_DOMAIN = 'https://www.sktradersphilipslighting.com';
-const DEFAULT_TITLE = 'SK Traders | Authorized Philips Lighting Products & Solutions | Hyderabad';
+const DEFAULT_TITLE = 'SK Traders | Authorized Philips Lighting Distributor';
 const DEFAULT_DESC =
-  'SK Traders - Authorized distributor of authentic Philips Lighting products in Hyderabad. Supplying residential LED lights, hospital cleanroom luminaires, commercial floodlighting, and smart BLDC fans.';
+  'Authorized distributor of authentic Philips Lighting products in Hyderabad. Supplying LED lights, commercial fixtures, and smart BLDC fans.';
 const DEFAULT_IMAGE = `${DEFAULT_DOMAIN}/images/card_ceiling_design_lights.jpg`;
 
 export const SEOHead: React.FC<SEOHeadProps> = ({
@@ -27,7 +27,11 @@ export const SEOHead: React.FC<SEOHeadProps> = ({
 }) => {
   useEffect(() => {
     // 1. Title
-    const fullTitle = title ? `${title} | SK Traders` : DEFAULT_TITLE;
+    const fullTitle = title
+      ? title.includes('SK Traders')
+        ? title
+        : `${title} | SK Traders`
+      : DEFAULT_TITLE;
     document.title = fullTitle;
 
     // Helper to update meta tag by name or property

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { getProductBySlug, getProducts, DetailedProduct } from '../services/productsApi';
-import { Product3DViewer } from '../components/Product3DViewer';
 import { ProductCard } from '../components/ProductCard';
 import SEOHead from '../components/SEOHead';
 import {
   ChevronRight,
+  ChevronLeft,
   Star,
   Zap,
   Sun,
@@ -15,28 +15,35 @@ import {
   MessageSquare,
   Bookmark,
   Share2,
-  Sliders,
   Sparkles,
   ArrowRight,
   Award,
   Layers,
   Info,
+  Maximize2,
+  Download,
+  X,
+  Building,
+  CheckCircle2,
 } from 'lucide-react';
 
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
 
   const [product, setProduct] = useState<DetailedProduct | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<DetailedProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Dynamic user selections
+  // Gallery state
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  // Dynamic user selection state
   const [selectedCct, setSelectedCct] = useState<string>('Warm White (3000K)');
   const [selectedColorHex, setSelectedColorHex] = useState<string>('#ffedc2');
   const [selectedVariantId, setSelectedVariantId] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState<'specs' | 'installation' | 'warranty'>('specs');
+  const [activeTab, setActiveTab] = useState<'specs' | 'features' | 'installation' | 'warranty'>('specs');
   const [enquirySuccessModal, setEnquirySuccessModal] = useState(false);
   const [savedToProject, setSavedToProject] = useState(false);
 
@@ -49,6 +56,7 @@ export const ProductDetailPage: React.FC = () => {
         const prod = await getProductBySlug(slug);
         if (prod) {
           setProduct(prod);
+          setActiveImageIndex(0);
           if (prod.cct_options && prod.cct_options.length > 0) {
             setSelectedCct(prod.cct_options[0]);
             updateHexFromCct(prod.cct_options[0]);
@@ -57,12 +65,19 @@ export const ProductDetailPage: React.FC = () => {
             setSelectedVariantId(prod.variants[0].id);
           }
 
-          // Fetch related products from same category
+          // Fetch related products (manually connected or fallback to same category)
           const allProds = await getProducts();
-          const related = allProds.filter(
-            (p) => p.category_slug === prod.category_slug && p.id !== prod.id
-          );
-          setRelatedProducts(related.slice(0, 3));
+          let relatedList: DetailedProduct[] = [];
+
+          if (prod.related_product_ids && prod.related_product_ids.length > 0) {
+            relatedList = allProds.filter((p) => prod.related_product_ids?.includes(p.id));
+          }
+
+          if (relatedList.length === 0) {
+            relatedList = allProds.filter((p) => p.category_slug === prod.category_slug && p.id !== prod.id);
+          }
+
+          setRelatedProducts(relatedList.slice(0, 4));
         }
       } catch (err) {
         console.error('Error loading product details:', err);
@@ -99,10 +114,10 @@ export const ProductDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center pt-24">
+      <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center pt-24 font-sans">
         <div className="flex flex-col items-center gap-3">
           <div className="w-12 h-12 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
-          <p className="text-sm font-medium text-slate-400">Loading Product 3D Experience...</p>
+          <p className="text-sm font-medium text-slate-600">Loading Philips Product Studio...</p>
         </div>
       </div>
     );
@@ -110,14 +125,14 @@ export const ProductDetailPage: React.FC = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center pt-24">
-        <h2 className="text-2xl font-bold text-slate-200">Product Not Found</h2>
-        <p className="text-xs text-slate-400 mt-2 mb-6">The requested product catalogue page could not be located.</p>
+      <div className="min-h-screen bg-white text-slate-900 flex flex-col items-center justify-center p-6 text-center pt-24 font-sans">
+        <h2 className="text-2xl font-bold text-slate-900">Product Not Found</h2>
+        <p className="text-xs text-slate-600 mt-2 mb-6">The requested product catalogue entry could not be located.</p>
         <Link
           to="/products"
           className="px-6 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition-colors"
         >
-          Return to Catalogue
+          Return to Product Catalogue
         </Link>
       </div>
     );
@@ -126,16 +141,34 @@ export const ProductDetailPage: React.FC = () => {
   const selectedVariant = product.variants?.find((v) => v.id === selectedVariantId);
   const currentPrice = selectedVariant?.price || product.price;
 
-  const productImg = product.image_url.startsWith('http')
-    ? product.image_url
-    : `https://www.sktradersphilipslighting.com${product.image_url.startsWith('/') ? '' : '/'}${product.image_url}`;
+  const galleryImagesList =
+    product.images && product.images.length > 0
+      ? product.images
+      : [product.image_url || '/images/card_smart_led_bulb.jpg'];
+
+  const currentMainImage = galleryImagesList[activeImageIndex] || galleryImagesList[0];
+
+  const handlePrevImage = () => {
+    setActiveImageIndex((prev) => (prev === 0 ? galleryImagesList.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = () => {
+    setActiveImageIndex((prev) => (prev === galleryImagesList.length - 1 ? 0 : prev + 1));
+  };
+
+  // Specs array cleanup: filter out empty names or values
+  const validSpecsList = (product.specifications || []).filter(
+    (s) => s.specification_name.trim() !== '' && s.specification_value.trim() !== ''
+  );
+
+  const primaryCatalogue = product.catalogues?.[0] || (product.catalogue_url ? { name: `${product.name} Datasheet`, file_url: product.catalogue_url, file_size_bytes: 1500000 } : null);
 
   const productJsonLd = [
     {
       '@context': 'https://schema.org',
       '@type': 'Product',
       name: product.name,
-      image: productImg,
+      image: currentMainImage,
       description: product.short_description || product.description,
       sku: product.sku,
       brand: {
@@ -144,7 +177,7 @@ export const ProductDetailPage: React.FC = () => {
       },
       offers: {
         '@type': 'Offer',
-        url: `https://www.sktradersphilipslighting.com/products/detail/${product.slug}`,
+        url: `https://www.sktradersphilipslighting.com/products/${product.slug}`,
         priceCurrency: 'INR',
         price: currentPrice,
         availability: product.is_in_stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
@@ -153,127 +186,146 @@ export const ProductDetailPage: React.FC = () => {
           name: 'SK Traders',
         },
       },
-      ...(product.rating
-        ? {
-            aggregateRating: {
-              '@type': 'AggregateRating',
-              ratingValue: product.rating,
-              reviewCount: product.reviews_count || 12,
-            },
-          }
-        : {}),
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        {
-          '@type': 'ListItem',
-          position: 1,
-          name: 'Home',
-          item: 'https://www.sktradersphilipslighting.com/',
-        },
-        {
-          '@type': 'ListItem',
-          position: 2,
-          name: 'Products',
-          item: 'https://www.sktradersphilipslighting.com/products',
-        },
-        {
-          '@type': 'ListItem',
-          position: 3,
-          name: product.category_name,
-          item: `https://www.sktradersphilipslighting.com/products/${product.category_slug}`,
-        },
-        {
-          '@type': 'ListItem',
-          position: 4,
-          name: product.name,
-          item: `https://www.sktradersphilipslighting.com/products/detail/${product.slug}`,
-        },
-      ],
     },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pt-24 pb-20 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white text-slate-900 pt-24 pb-20 px-4 sm:px-6 lg:px-8 font-sans">
       <SEOHead
         title={`${product.name} | ${product.brand} - SK Traders`}
         description={product.short_description || product.description}
-        canonicalPath={`/products/detail/${product.slug}`}
-        image={product.image_url}
+        canonicalPath={`/products/${product.slug}`}
+        image={currentMainImage}
         type="product"
         keywords={`${product.name}, ${product.brand}, ${product.sku}, ${product.category_name}, SK Traders Hyderabad`}
         jsonLd={productJsonLd}
       />
-      {/* Background Lighting Glow */}
+
+      {/* Ambient Glow Effects */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div
-          className="absolute top-1/3 left-1/4 w-[600px] h-[600px] blur-[160px] rounded-full transition-colors duration-700 opacity-20"
+          className="absolute top-1/3 left-1/4 w-[600px] h-[600px] blur-[160px] rounded-full transition-colors duration-700 opacity-10"
           style={{ backgroundColor: selectedColorHex }}
         />
-        <div className="absolute top-2/3 right-10 w-[400px] h-[400px] bg-amber-500/10 blur-[140px] rounded-full" />
+        <div className="absolute top-2/3 right-10 w-[400px] h-[400px] bg-amber-500/5 blur-[140px] rounded-full" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto space-y-10">
-        {/* Breadcrumb Navigation */}
-        <nav className="flex items-center gap-2 text-xs font-medium text-slate-400 flex-wrap">
-          <Link to="/" className="hover:text-amber-400 transition-colors">Home</Link>
-          <ChevronRight className="w-3.5 h-3.5" />
-          <Link to="/products" className="hover:text-amber-400 transition-colors">Catalogue</Link>
-          <ChevronRight className="w-3.5 h-3.5" />
+        {/* 1. Breadcrumb Navigation */}
+        <nav className="flex items-center gap-2 text-xs font-medium text-slate-600 flex-wrap">
+          <Link to="/" className="hover:text-amber-600 transition-colors">Home</Link>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+          <Link to="/products" className="hover:text-amber-600 transition-colors">Catalogue</Link>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
           <Link
             to={`/products/${product.category_slug}`}
-            className="hover:text-amber-400 transition-colors capitalize"
+            className="hover:text-amber-600 transition-colors capitalize font-semibold text-slate-800"
           >
-            {product.category_slug.replace('-', ' ')}
+            {product.category_name || product.category_slug.replace('-', ' ')}
           </Link>
-          <ChevronRight className="w-3.5 h-3.5" />
-          <span className="text-amber-400 font-semibold line-clamp-1">{product.name}</span>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-slate-900 font-bold line-clamp-1">{product.name}</span>
         </nav>
 
-        {/* Top Product Detail Section: Left 3D Viewer | Right Info */}
+        {/* Top Product Showcase Layout: Left Image Gallery | Right Key Information */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-          {/* Left Column: Interactive 3D Product Studio */}
+          {/* Left Column: Product Image Gallery */}
           <div className="lg:col-span-7 space-y-4">
-            <Product3DViewer
-              modelUrl={product.model_3d_url}
-              images={product.images}
-              title={product.name}
-              categorySlug={product.category_slug}
-              lightColorHex={selectedColorHex}
-              wattage={product.wattage}
-              lumens={product.lumens}
-            />
+            <div className="relative aspect-square sm:aspect-[4/3] rounded-3xl overflow-hidden bg-slate-50 border border-slate-200 shadow-sm flex items-center justify-center p-4 group">
+              <img
+                src={currentMainImage}
+                alt={product.name}
+                className="w-full h-full object-cover rounded-2xl transition-all duration-500"
+              />
 
-            {/* 3D Color Light Beam Controller Banner */}
-            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-4">
+              <div
+                className="absolute inset-0 pointer-events-none opacity-10 transition-colors duration-700 rounded-3xl"
+                style={{ backgroundColor: selectedColorHex }}
+              />
+
+              {/* Prev & Next Gallery Controls */}
+              {galleryImagesList.length > 1 && (
+                <>
+                  <button
+                    onClick={handlePrevImage}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-white/90 hover:bg-white text-slate-800 shadow-md border border-slate-200 opacity-80 hover:opacity-100 transition-all"
+                    title="Previous Image"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={handleNextImage}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-white/90 hover:bg-white text-slate-800 shadow-md border border-slate-200 opacity-80 hover:opacity-100 transition-all"
+                    title="Next Image"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+
+              {/* Lightbox Trigger */}
+              <button
+                onClick={() => setLightboxOpen(true)}
+                className="absolute top-4 right-4 p-2.5 rounded-xl bg-white/90 hover:bg-white text-slate-700 shadow-md border border-slate-200 transition-all flex items-center gap-1.5 text-xs font-semibold"
+                title="Fullscreen Lightbox"
+              >
+                <Maximize2 className="w-4 h-4 text-slate-800" />
+                <span className="hidden sm:inline">Zoom View</span>
+              </button>
+            </div>
+
+            {/* Gallery Thumbnails */}
+            {galleryImagesList.length > 1 && (
+              <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
+                {galleryImagesList.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImageIndex(idx)}
+                    className={`w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all shrink-0 bg-slate-50 relative ${
+                      activeImageIndex === idx
+                        ? 'border-amber-500 shadow-md scale-105'
+                        : 'border-slate-200 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={img} alt={`${product.name} thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                    {idx === 0 && (
+                      <span className="absolute bottom-1 left-1 px-1 py-0.2 rounded bg-amber-500 text-[8px] font-black text-slate-950 uppercase">
+                        Main
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Color Temperature Preview Banner */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div
-                  className="w-5 h-5 rounded-full border-2 border-white/60 shadow-lg animate-pulse"
+                  className="w-5 h-5 rounded-full border-2 border-white shadow-md animate-pulse shrink-0"
                   style={{ backgroundColor: selectedColorHex }}
                 />
                 <div>
-                  <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    Live 3D Beam Color Preview
+                  <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    Color Temperature & Light Preview
                   </h4>
-                  <p className="text-[11px] text-slate-400">
-                    Active CCT: <span className="text-amber-300 font-semibold">{selectedCct}</span>
+                  <p className="text-[11px] text-slate-600">
+                    Active CCT Mode: <span className="text-amber-700 font-bold">{selectedCct}</span>
                   </p>
                 </div>
               </div>
 
-              {/* Color Temperature Selector Buttons */}
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 {(product.cct_options || ['Warm White', 'Neutral White', 'Cool White']).map((cct) => (
                   <button
                     key={cct}
                     onClick={() => handleCctChange(cct)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                    className={`px-3 py-1 rounded-xl text-[11px] font-semibold transition-all ${
                       selectedCct === cct
-                        ? 'bg-amber-500 text-slate-950 font-bold shadow-md'
-                        : 'bg-slate-800 text-slate-300 hover:text-white'
+                        ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
+                        : 'bg-white border border-slate-200 text-slate-700 hover:text-slate-900'
                     }`}
                   >
                     {cct.split(' ')[0]}
@@ -283,144 +335,113 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: Product Specs & Ordering */}
-          <div className="lg:col-span-5 space-y-6 bg-slate-900/60 backdrop-blur-md p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl">
+          {/* Right Column: Key Details, SKU, Actions */}
+          <div className="lg:col-span-5 space-y-6 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm">
             {/* Header Badges */}
             <div className="flex items-center justify-between gap-3">
-              <span className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold uppercase tracking-wider">
+              <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold uppercase tracking-wider">
                 {product.brand}
               </span>
               {product.is_smart && (
-                <span className="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-xs font-semibold flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Smart Connected
+                <span className="px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-sky-700 text-xs font-bold flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-sky-600" />
+                  WiZ Connected
                 </span>
               )}
             </div>
 
-            {/* Product Title & Rating */}
+            {/* Title & Metadata */}
             <div className="space-y-2">
-              <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight">
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
                 {product.name}
               </h1>
-              <div className="flex items-center gap-3 text-xs text-slate-400">
-                <div className="flex items-center gap-1 text-amber-400 font-semibold">
+              <div className="flex items-center gap-3 text-xs text-slate-600 flex-wrap">
+                <div className="flex items-center gap-1 text-amber-500 font-bold">
                   <Star className="w-4 h-4 fill-amber-400" />
                   <span>{product.rating || 4.9}</span>
                   <span className="text-slate-500">({product.reviews_count || 18} reviews)</span>
                 </div>
-                <div className="w-px h-3 bg-slate-800" />
-                <span>SKU: <strong className="text-slate-300 font-mono">{product.sku}</strong></span>
+                <div className="w-px h-3 bg-slate-200" />
+                <span>Code / SKU: <strong className="text-slate-800 font-mono">{product.sku}</strong></span>
               </div>
             </div>
 
             {/* Pricing Section */}
-            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-center justify-between">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
               <div>
-                <span className="text-xs text-slate-400 block font-medium">Bulk Trade Price</span>
+                <span className="text-xs text-slate-600 block font-medium">Bulk Trade Price</span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl sm:text-3xl font-black text-amber-400">
+                  <span className="text-2xl sm:text-3xl font-black text-emerald-700">
                     ₹{currentPrice.toLocaleString()}
                   </span>
                   {product.original_price && (
-                    <span className="text-sm text-slate-500 line-through">
+                    <span className="text-sm text-slate-400 line-through">
                       ₹{product.original_price.toLocaleString()}
                     </span>
                   )}
                 </div>
               </div>
               <div className="text-right">
-                <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold block">
+                <span className="px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold block">
                   {product.is_in_stock ? 'In Stock • Ready to Dispatch' : 'Made to Order'}
                 </span>
-                <span className="text-[11px] text-slate-400 mt-1 block">GST Included</span>
+                <span className="text-[11px] text-slate-500 mt-1 block">GST Included</span>
               </div>
             </div>
 
-            {/* Technical Quick Spec Pills */}
+            {/* Quick Specs Cards */}
             <div className="grid grid-cols-3 gap-3">
-              <div className="p-3 rounded-xl bg-slate-950/50 border border-slate-800/80 text-center">
-                <Zap className="w-4 h-4 text-amber-400 mx-auto mb-1" />
-                <span className="text-[10px] text-slate-400 block uppercase font-bold">Wattage</span>
-                <span className="text-xs font-bold text-white">{product.wattage}W</span>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                <Zap className="w-4 h-4 text-amber-500 mx-auto mb-1" />
+                <span className="text-[10px] text-slate-500 block uppercase font-bold">Wattage</span>
+                <span className="text-xs font-bold text-slate-900">{product.wattage}W</span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-950/50 border border-slate-800/80 text-center">
-                <Sun className="w-4 h-4 text-sky-400 mx-auto mb-1" />
-                <span className="text-[10px] text-slate-400 block uppercase font-bold">Brightness</span>
-                <span className="text-xs font-bold text-white">{product.lumens} lm</span>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                <Sun className="w-4 h-4 text-sky-500 mx-auto mb-1" />
+                <span className="text-[10px] text-slate-500 block uppercase font-bold">Brightness</span>
+                <span className="text-xs font-bold text-slate-900">{product.lumens} lm</span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-950/50 border border-slate-800/80 text-center">
-                <Award className="w-4 h-4 text-emerald-400 mx-auto mb-1" />
-                <span className="text-[10px] text-slate-400 block uppercase font-bold">Efficiency</span>
-                <span className="text-xs font-bold text-white">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                <Award className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
+                <span className="text-[10px] text-slate-500 block uppercase font-bold">Efficiency</span>
+                <span className="text-xs font-bold text-slate-900">
                   {Number(product.wattage) > 0 ? Math.round(Number(product.lumens) / Number(product.wattage)) : 100} lm/W
                 </span>
               </div>
             </div>
 
-            {/* Variant Selector (if available) */}
-            {product.variants && product.variants.length > 0 && (
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-                  Select Size / Finish Variant
-                </label>
-                <select
-                  value={selectedVariantId}
-                  onChange={(e) => setSelectedVariantId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
-                >
-                  {product.variants.map((variant) => (
-                    <option key={variant.id} value={variant.id}>
-                      {variant.name || variant.sku} ({variant.wattage}W, {variant.color_finish || variant.color}) — ₹
-                      {(variant.price || 0).toLocaleString()}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {/* Short Summary */}
+            {product.short_description && (
+              <p className="text-xs text-slate-600 leading-relaxed italic border-l-2 border-amber-500 pl-3">
+                "{product.short_description}"
+              </p>
             )}
 
-            {/* Key Features Bullet List */}
-            {product.features && product.features.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                  Key Highlights
-                </h3>
-                <ul className="space-y-1.5 text-xs text-slate-300">
-                  {product.features.map((feat, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <CheckCircle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Quantity Selector & Action Buttons */}
+            {/* Primary Action Buttons */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center gap-3">
-                <div className="flex items-center border border-slate-700 rounded-xl bg-slate-950 overflow-hidden">
+                <div className="flex items-center border border-slate-300 rounded-xl bg-white overflow-hidden">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="px-3 py-2 text-slate-400 hover:text-white text-xs font-bold hover:bg-slate-800"
+                    className="px-3 py-2 text-slate-600 hover:text-slate-900 text-xs font-bold hover:bg-slate-100"
                   >
                     -
                   </button>
-                  <span className="px-4 py-2 text-xs font-bold text-white min-w-[40px] text-center">
+                  <span className="px-4 py-2 text-xs font-bold text-slate-900 min-w-[40px] text-center">
                     {quantity}
                   </span>
                   <button
                     onClick={() => setQuantity(quantity + 1)}
-                    className="px-3 py-2 text-slate-400 hover:text-white text-xs font-bold hover:bg-slate-800"
+                    className="px-3 py-2 text-slate-600 hover:text-slate-900 text-xs font-bold hover:bg-slate-100"
                   >
                     +
                   </button>
                 </div>
 
-                {/* Primary Enquiry Button */}
+                {/* Primary Contact / Bulk Enquiry Button */}
                 <button
                   onClick={handleEnquiry}
-                  className="flex-1 py-3 px-6 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs sm:text-sm shadow-xl shadow-amber-500/20 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 py-3 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <MessageSquare className="w-4 h-4" />
                   Request Bulk Quote / Enquiry
@@ -432,8 +453,8 @@ export const ProductDetailPage: React.FC = () => {
                   onClick={() => setSavedToProject(!savedToProject)}
                   className={`flex-1 py-2.5 rounded-xl border text-xs font-semibold transition-colors flex items-center justify-center gap-2 ${
                     savedToProject
-                      ? 'bg-amber-500/20 border-amber-500 text-amber-300'
-                      : 'bg-slate-950 border-slate-800 text-slate-300 hover:bg-slate-800'
+                      ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                   }`}
                 >
                   <Bookmark className="w-3.5 h-3.5" />
@@ -445,37 +466,61 @@ export const ProductDetailPage: React.FC = () => {
                     navigator.clipboard?.writeText?.(window.location.href);
                     alert('Product link copied to clipboard!');
                   }}
-                  className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white"
+                  className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                   title="Share Product"
                 >
                   <Share2 className="w-4 h-4" />
                 </button>
               </div>
+
+              {/* Primary Download Catalogue Button */}
+              {primaryCatalogue && (
+                <a
+                  href={primaryCatalogue.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
+                >
+                  <Download className="w-4 h-4 text-slate-950" />
+                  Download Catalogue PDF
+                </a>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Detailed Tabs: Specifications Table | Installation Guide | Warranty */}
-        <div className="bg-slate-900/60 backdrop-blur-md rounded-3xl border border-slate-800 p-6 sm:p-10 space-y-6">
+        {/* 2. DYNAMIC TECHNICAL SPECIFICATIONS TABLE & STRUCTURED TABS */}
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-10 space-y-6 shadow-sm">
           {/* Tab Controls */}
-          <div className="flex items-center gap-4 border-b border-slate-800 pb-4 overflow-x-auto">
+          <div className="flex items-center gap-3 border-b border-slate-200 pb-4 overflow-x-auto">
             <button
               onClick={() => setActiveTab('specs')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
                 activeTab === 'specs'
-                  ? 'bg-amber-500 text-slate-950 shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-amber-500 text-slate-950 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
               <FileText className="w-4 h-4" />
-              Technical Specifications
+              Technical Specifications ({validSpecsList.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('features')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+                activeTab === 'features'
+                  ? 'bg-amber-500 text-slate-950 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              Features & Description
             </button>
             <button
               onClick={() => setActiveTab('installation')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
                 activeTab === 'installation'
-                  ? 'bg-amber-500 text-slate-950 shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-amber-500 text-slate-950 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
               <Layers className="w-4 h-4" />
@@ -483,115 +528,192 @@ export const ProductDetailPage: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('warranty')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
                 activeTab === 'warranty'
-                  ? 'bg-amber-500 text-slate-950 shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-amber-500 text-slate-950 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
               <ShieldCheck className="w-4 h-4" />
-              Warranty & Certifications
+              Warranty & Compliance
             </button>
           </div>
 
-          {/* Tab 1: Technical Specs Table */}
+          {/* TAB 1: DYNAMIC TECHNICAL SPECIFICATIONS GRID */}
           {activeTab === 'specs' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
-              <table className="w-full text-left border-collapse">
-                <tbody>
-                  <tr className="border-b border-slate-800/80">
-                    <th className="py-2.5 text-slate-400 font-semibold w-1/2">Operating Voltage</th>
-                    <td className="py-2.5 text-slate-200 font-medium">{product.voltage || '220V - 240V AC 50/60Hz'}</td>
-                  </tr>
-                  <tr className="border-b border-slate-800/80">
-                    <th className="py-2.5 text-slate-400 font-semibold">Color Rendering Index (CRI)</th>
-                    <td className="py-2.5 text-amber-400 font-bold">CRI {product.cri || '> 90 Ra (High Fidelity)'}</td>
-                  </tr>
-                  <tr className="border-b border-slate-800/80">
-                    <th className="py-2.5 text-slate-400 font-semibold">Beam Angle Options</th>
-                    <td className="py-2.5 text-slate-200 font-medium">{product.beam_angle || '24° / 36° / 60° Refractor'}</td>
-                  </tr>
-                  <tr className="border-b border-slate-800/80">
-                    <th className="py-2.5 text-slate-400 font-semibold">IP Protection Rating</th>
-                    <td className="py-2.5 text-slate-200 font-medium">{product.ip_rating || 'IP44 Dust & Moisture Resistant'}</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-amber-600" />
+                Technical Specification Parameters
+              </h3>
 
-              <table className="w-full text-left border-collapse">
-                <tbody>
-                  <tr className="border-b border-slate-800/80">
-                    <th className="py-2.5 text-slate-400 font-semibold w-1/2">Dimensions</th>
-                    <td className="py-2.5 text-slate-200 font-medium">{product.dimensions || 'Dia: 90mm x H: 110mm'}</td>
-                  </tr>
-                  <tr className="border-b border-slate-800/80">
-                    <th className="py-2.5 text-slate-400 font-semibold">Body Material & Finish</th>
-                    <td className="py-2.5 text-slate-200 font-medium">{product.material_finish || 'Die-cast Aerospace Aluminum'}</td>
-                  </tr>
-                  <tr className="border-b border-slate-800/80">
-                    <th className="py-2.5 text-slate-400 font-semibold">Rated Lifespan (L70)</th>
-                    <td className="py-2.5 text-slate-200 font-medium">{product.lifespan_hours ? `${product.lifespan_hours.toLocaleString()} Hours` : '50,000 Hours'}</td>
-                  </tr>
-                  <tr className="border-b border-slate-800/80">
-                    <th className="py-2.5 text-slate-400 font-semibold">Warranty Period</th>
-                    <td className="py-2.5 text-emerald-400 font-bold">{product.warranty_years || 5} Years Full Replacement</td>
-                  </tr>
-                </tbody>
-              </table>
+              {validSpecsList.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-xs border border-slate-200 rounded-2xl overflow-hidden divide-y md:divide-y-0 divide-slate-100">
+                  <div className="divide-y divide-slate-100">
+                    {validSpecsList.slice(0, Math.ceil(validSpecsList.length / 2)).map((spec, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3.5 hover:bg-slate-50 transition-colors">
+                        <span className="font-semibold text-slate-600 w-1/2">{spec.specification_name}</span>
+                        <span className="font-bold text-slate-900 w-1/2 text-right font-mono">{spec.specification_value}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="divide-y divide-slate-100 border-t md:border-t-0 border-slate-200">
+                    {validSpecsList.slice(Math.ceil(validSpecsList.length / 2)).map((spec, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3.5 hover:bg-slate-50 transition-colors">
+                        <span className="font-semibold text-slate-600 w-1/2">{spec.specification_name}</span>
+                        <span className="font-bold text-slate-900 w-1/2 text-right font-mono">{spec.specification_value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">No custom specifications listed.</p>
+              )}
             </div>
           )}
 
-          {/* Tab 2: Installation Guide */}
+          {/* TAB 2: FEATURES, BENEFITS & DESCRIPTION */}
+          {activeTab === 'features' && (
+            <div className="space-y-6 text-xs text-slate-700 leading-relaxed">
+              {/* Product Overview */}
+              {product.overview_text && (
+                <div className="space-y-2">
+                  <h4 className="font-bold text-sm text-slate-900">Product Overview</h4>
+                  <p className="text-slate-600 whitespace-pre-line">{product.overview_text}</p>
+                </div>
+              )}
+
+              {/* Key Features & Benefits */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                {product.features && product.features.length > 0 && (
+                  <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                    <h4 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      Key Product Features
+                    </h4>
+                    <ul className="space-y-2">
+                      {product.features.map((feat, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-slate-800 font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5" />
+                          <span>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {product.benefits && product.benefits.length > 0 && (
+                  <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                    <h4 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                      <Award className="w-4 h-4 text-sky-600" />
+                      Product Benefits
+                    </h4>
+                    <ul className="space-y-2">
+                      {product.benefits.map((ben, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-slate-800 font-medium">
+                          <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                          <span>{ben}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Applications & Sectors */}
+              {product.applications && product.applications.length > 0 && (
+                <div className="space-y-2 pt-2">
+                  <h4 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                    <Building className="w-4 h-4 text-amber-600" />
+                    Recommended Applications
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {product.applications.map((app, idx) => (
+                      <span key={idx} className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 font-semibold text-xs">
+                        {app}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: INSTALLATION GUIDE */}
           {activeTab === 'installation' && (
-            <div className="space-y-4 text-xs text-slate-300 leading-relaxed">
-              <h3 className="font-bold text-sm text-white">Recommended Mounting & Electrical Setup</h3>
-              <p>
-                1. Ensure power mains are isolated prior to installation.
-                <br />
-                2. Prepare false ceiling cutout matching specified cutout diameter ({product.dimensions || '75mm - 90mm'}).
-                <br />
-                3. Connect constant current LED driver input wires to AC mains (220-240V).
-                <br />
-                4. Secure fixture into false ceiling cavity using heavy-duty stainless steel spring clips.
+            <div className="space-y-4 text-xs text-slate-700 leading-relaxed">
+              <h3 className="font-bold text-sm text-slate-900">Recommended Mounting & Electrical Setup</h3>
+              <p className="whitespace-pre-line">
+                {product.installation_text ||
+                  `1. Ensure power mains are isolated prior to installation.\n2. Prepare false ceiling cutout matching specified cutout dimensions (${product.dimensions || 'Standard'}).\n3. Connect constant current LED driver input wires to AC mains (220-240V).\n4. Secure fixture into cavity using spring retention clips.`}
               </p>
-              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-center gap-3">
-                <Info className="w-5 h-5 shrink-0 text-amber-400" />
-                <span>Professional electrician installation recommended. Contact SK Traders technical helpdesk for custom wiring diagrams.</span>
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center gap-3">
+                <Info className="w-5 h-5 shrink-0 text-amber-600" />
+                <span>Licensed electrician installation recommended. Contact SK Traders technical helpdesk for custom wiring diagrams.</span>
               </div>
             </div>
           )}
 
-          {/* Tab 3: Warranty */}
+          {/* TAB 4: WARRANTY & COMPLIANCE */}
           {activeTab === 'warranty' && (
-            <div className="space-y-3 text-xs text-slate-300">
-              <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                SK Traders {product.warranty_years || 5}-Year On-Site / Factory Replacement Warranty
+            <div className="space-y-3 text-xs text-slate-700">
+              <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                SK Traders {product.warranty_years || 5}-Year On-Site / Replacement Warranty
               </h3>
-              <p>
-                All SK Traders fixtures undergo 100% thermal and optical burn-in testing. We provide full component replacement coverage against driver failures, LED lumen degradation exceeding 10%, or housing defects within the warranty window.
+              <p className="whitespace-pre-line">
+                {product.technical_info_text ||
+                  'All SK Traders fixtures undergo 100% thermal and optical burn-in testing. We provide full component replacement coverage against driver failures, LED lumen degradation exceeding 10%, or housing defects within the warranty window.'}
               </p>
             </div>
           )}
         </div>
 
-        {/* Related Products Section */}
+        {/* 3. DEDICATED CATALOGUE SECTION */}
+        {product.catalogues && product.catalogues.length > 0 && (
+          <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 space-y-4 shadow-xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-red-500/20 border border-red-500/30 text-red-400 flex items-center justify-center shrink-0">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Product Catalogue & Datasheet</h3>
+                  <p className="text-xs text-slate-400">Download high-resolution PDF technical specification sheet</p>
+                </div>
+              </div>
+
+              <a
+                href={product.catalogues[0].file_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 flex items-center gap-2 shrink-0"
+              >
+                <Download className="w-4 h-4" />
+                Download Catalogue PDF
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* 4. MANUALLY CONTROLLED RELATED PRODUCTS SECTION */}
         {relatedProducts.length > 0 && (
-          <div className="space-y-6">
+          <div className="space-y-6 pt-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-white">Explore Related Fixtures</h2>
-                <p className="text-xs text-slate-400">Matching architectural lighting options from SK Traders</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Related Products</h2>
+                <p className="text-xs text-slate-600">Explore complementary architectural lighting solutions</p>
               </div>
               <Link
                 to={`/products/${product.category_slug}`}
-                className="text-xs text-amber-400 hover:underline font-semibold flex items-center gap-1"
+                className="text-xs text-amber-600 hover:underline font-semibold flex items-center gap-1"
               >
                 View Category <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {relatedProducts.map((rel) => (
                 <ProductCard key={rel.id} product={rel} />
               ))}
@@ -600,21 +722,42 @@ export const ProductDetailPage: React.FC = () => {
         )}
       </div>
 
-      {/* Bulk Enquiry Modal */}
+      {/* LIGHTBOX MODAL OVERLAY */}
+      {lightboxOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+          <button
+            onClick={() => setLightboxOpen(false)}
+            className="absolute top-6 right-6 p-3 rounded-full bg-slate-800 text-white hover:bg-slate-700 transition-all cursor-pointer"
+            title="Close Lightbox"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          <div className="max-w-4xl w-full max-h-[85vh] flex items-center justify-center p-4">
+            <img
+              src={currentMainImage}
+              alt={product.name}
+              className="max-w-full max-h-[80vh] object-contain rounded-2xl border border-slate-800 shadow-2xl"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* BULK ENQUIRY MODAL */}
       {enquirySuccessModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center space-y-4 shadow-2xl">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center space-y-4 shadow-2xl">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-700 flex items-center justify-center mx-auto">
               <CheckCircle className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-bold text-white">Enquiry Requested!</h3>
-            <p className="text-xs text-slate-300">
-              Thank you for your interest in <strong className="text-amber-400">{product.name}</strong> (SKU: {product.sku}).
+            <h3 className="text-xl font-bold text-slate-900">Enquiry Requested!</h3>
+            <p className="text-xs text-slate-600">
+              Thank you for your interest in <strong className="text-amber-600">{product.name}</strong> (SKU: {product.sku}).
               Our SK Traders lighting specialist will get back to you with custom bulk pricing within 2 business hours.
             </p>
             <button
               onClick={() => setEnquirySuccessModal(false)}
-              className="w-full py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition-colors"
+              className="w-full py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition-colors cursor-pointer"
             >
               Back to Product Studio
             </button>

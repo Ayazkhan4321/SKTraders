@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 
 // Admin CMS Context, Layout & Pages
 import { AdminAuthProvider } from './admin/context/AdminAuthContext';
@@ -17,6 +17,9 @@ import FeaturePagesManagement from './admin/pages/FeaturePagesManagement';
 import FeaturePageEditor from './admin/pages/FeaturePageEditor';
 import { AdminProductsManagement } from './admin/pages/AdminProductsManagement';
 import { AdminProductEditor } from './admin/pages/AdminProductEditor';
+import { AdminCategoriesManagement } from './admin/pages/AdminCategoriesManagement';
+import { AdminHomepageProductsManagement } from './admin/pages/AdminHomepageProductsManagement';
+import { AdminHomepageProductEditor } from './admin/pages/AdminHomepageProductEditor';
 import ProductSearchSection from './components/ProductSearchSection';
 import CircularSolutionsCarousel from './components/CircularSolutionsCarousel';
 // Public Website Pages & Components
@@ -25,6 +28,7 @@ import { ApplicationsPage } from './pages/ApplicationsPage';
 import ApplicationDetailPage from './pages/ApplicationDetailPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
+import { CategoryPage } from './pages/CategoryPage';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import SectionResources from './components/SectionResources';
@@ -58,7 +62,7 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="relative min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-amber-500 selection:text-slate-950">
+    <div className="relative min-h-screen bg-white text-slate-900 font-sans selection:bg-[#00e676] selection:text-slate-950">
       <Navbar onOpenQuote={() => handleOpenQuote()} />
       {children}
       <Footer />
@@ -163,8 +167,8 @@ function PublicWebsite() {
   return (
     <main className="relative min-h-screen bg-white text-slate-900 overflow-hidden selection:bg-[#00e676] selection:text-black font-sans">
       <SEOHead
-        title="Authorized Philips Lighting Distributor in Hyderabad | Home"
-        description="SK Traders is Hyderabad's premier authorized distributor of authentic Philips & Signify Lighting products. Complete residential, hospital cleanroom, commercial floodlights, and smart BLDC fans."
+        title="SK Traders | Authorized Philips Lighting Distributor"
+        description="Authorized distributor of authentic Philips Lighting products in Hyderabad. Supplying LED lights, commercial fixtures, and smart BLDC fans."
         canonicalPath="/"
         keywords="SK Traders, Philips Lighting Hyderabad, Authorized Philips Distributor, Signify Lighting, COB Downlights, BLDC Fans Hyderabad"
       />
@@ -223,6 +227,30 @@ function PublicWebsite() {
   );
 }
 
+const CATEGORY_SLUGS = [
+  'ceiling-lights',
+  'led-bulbs',
+  'panel-lights',
+  'downlights',
+  'spotlights',
+  'decorative-lights',
+  'smart-lighting',
+  'fans',
+  'indoor-lighting',
+  'outdoor-lighting',
+  'commercial-lighting',
+  'all',
+];
+
+function ProductOrCategoryResolver() {
+  const { category: slugOrCategory } = useParams<{ category?: string }>();
+  if (!slugOrCategory) return <ProductsPage />;
+  if (CATEGORY_SLUGS.includes(slugOrCategory.toLowerCase())) {
+    return <ProductsPage />;
+  }
+  return <ProductDetailPage />;
+}
+
 export default function App() {
   return (
     <AdminAuthProvider>
@@ -233,7 +261,6 @@ export default function App() {
           <Route path="/features/:slug" element={<FeatureDetailPage />} />
           <Route path="/applications" element={<ApplicationsPage />} />
           <Route path="/applications/:slug" element={<ApplicationDetailPage />} />
-
           {/* Product Catalogue Routes */}
           <Route
             path="/products"
@@ -247,7 +274,7 @@ export default function App() {
             path="/products/:category"
             element={
               <PublicLayout>
-                <ProductsPage />
+                <ProductOrCategoryResolver />
               </PublicLayout>
             }
           />
@@ -256,6 +283,14 @@ export default function App() {
             element={
               <PublicLayout>
                 <ProductDetailPage />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/lighting/:categorySlug"
+            element={
+              <PublicLayout>
+                <CategoryPage />
               </PublicLayout>
             }
           />
@@ -276,6 +311,10 @@ export default function App() {
             <Route path="products" element={<AdminProductsManagement />} />
             <Route path="products/new" element={<AdminProductEditor />} />
             <Route path="products/edit/:id" element={<AdminProductEditor />} />
+            <Route path="categories" element={<AdminCategoriesManagement />} />
+            <Route path="homepage-products" element={<AdminHomepageProductsManagement />} />
+            <Route path="homepage-products/new" element={<AdminHomepageProductEditor />} />
+            <Route path="homepage-products/edit/:id" element={<AdminHomepageProductEditor />} />
             <Route path="hero" element={<HeroManagement />} />
             <Route path="hero-cards" element={<HeroCardsManagement />} />
             <Route path="features" element={<FeaturePagesManagement />} />

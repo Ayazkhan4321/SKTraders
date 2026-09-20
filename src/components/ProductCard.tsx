@@ -33,14 +33,6 @@ export function ProductCard({ product, onOpenQuote }: ProductCardProps) {
             </span>
           )}
         </div>
-
-        {/* 3D Badge */}
-        {product.is_3d_enabled && (
-          <div className="absolute bottom-4 right-4 px-2.5 py-1 rounded-full bg-slate-950/80 border border-slate-700 text-cyan-400 text-[10px] font-mono font-bold backdrop-blur-md flex items-center gap-1">
-            <Eye className="w-3 h-3" />
-            <span>3D View</span>
-          </div>
-        )}
       </div>
 
       {/* Product Details */}
@@ -74,7 +66,7 @@ export function ProductCard({ product, onOpenQuote }: ProductCardProps) {
         {/* Action Controls */}
         <div className="pt-2 flex items-center justify-between">
           <Link
-            to={`/products/detail/${product.slug}`}
+            to={`/products/${product.slug}`}
             className="text-xs font-bold text-[#00c853] uppercase tracking-wider group-hover:translate-x-1 transition-transform flex items-center gap-1.5"
           >
             <span>View Product</span>

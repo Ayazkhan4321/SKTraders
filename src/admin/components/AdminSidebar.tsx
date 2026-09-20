@@ -44,6 +44,18 @@ export default function AdminSidebar({ mobileOpen, onCloseMobile }: AdminSidebar
       badge: '3D Studio',
     },
     {
+      label: 'Product Categories',
+      path: '/admin/categories',
+      icon: <Layers className="w-5 h-5 text-emerald-400" />,
+      badge: 'Categories',
+    },
+    {
+      label: 'Homepage Products',
+      path: '/admin/homepage-products',
+      icon: <Sparkles className="w-5 h-5 text-amber-400" />,
+      badge: 'Home Display',
+    },
+    {
       label: 'Hero Section',
       path: '/admin/hero',
       icon: <Tv className="w-5 h-5" />,

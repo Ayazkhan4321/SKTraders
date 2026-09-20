@@ -1,81 +1,100 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { getCategories, ProductCategory } from '../services/productsApi';
+import { ArrowRight, Sparkles } from 'lucide-react';
 
 interface SectionBrandGridProps {
-  onOpenQuote: () => void;
+  onOpenQuote?: () => void;
 }
 
 export default function SectionBrandGrid({ onOpenQuote }: SectionBrandGridProps) {
-  const brandCards = [
-    {
-      id: 'philips',
-      name: 'PHILIPS',
-      subtext: 'Professional & Home Lighting',
-      image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=800&auto=format&fit=crop',
-      logoStyle: 'font-display font-black tracking-widest text-2xl text-white uppercase',
-    },
-    {
-      id: 'hue',
-      name: 'PHILIPS hue',
-      subtext: 'Smart Connected Home Atmosphere',
-      image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=800&auto=format&fit=crop',
-      logoStyle: 'font-display font-bold tracking-tight text-2xl text-white',
-    },
-    {
-      id: 'colorkinetics',
-      name: 'COLOR KINETICS',
-      subtext: 'Architectural Dynamic RGB Illumination',
-      image: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?q=80&w=800&auto=format&fit=crop',
-      logoStyle: 'font-display font-extrabold tracking-wider text-xl text-white uppercase flex items-center gap-2',
-    },
-  ];
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCats = async () => {
+      try {
+        const data = await getCategories();
+        // Display active published categories
+        const activeCats = data.filter((c) => c.is_active && c.status !== 'draft');
+        setCategories(activeCats);
+      } catch (err) {
+        console.error('Failed to load categories for homepage grid:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCats();
+  }, []);
 
   return (
-    <section className="py-16 bg-white border-b border-slate-100">
-      <div className="max-w-7xl mx-auto px-6 md:px-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {brandCards.map((card) => (
-            <div
-              key={card.id}
-              onClick={onOpenQuote}
-              className="group relative cursor-pointer aspect-[3/4] rounded-none overflow-hidden signify-card shadow-sm hover:shadow-xl"
-            >
-              {/* Card Image */}
-              <img
-                src={card.image}
-                alt={card.name}
-                className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-              />
-
-              {/* Gradient Overlay for bottom text visibility matching Screenshot 2 */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-
-              {/* Bottom Logo & Brand Overlay matching Screenshot 2 */}
-              <div className="absolute bottom-8 left-8 right-8 z-10 flex flex-col items-start space-y-1">
-                {card.id === 'colorkinetics' ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center">
-                      <span className="w-2 h-2 rounded-full bg-white"></span>
-                    </div>
-                    <span className="font-display font-extrabold tracking-wider text-xl text-white uppercase">
-                      COLOR KINETICS
-                    </span>
-                  </div>
-                ) : card.id === 'hue' ? (
-                  <div className="flex flex-col">
-                    <span className="text-xs uppercase tracking-widest font-bold text-white/80">PHILIPS</span>
-                    <span className="font-display font-bold text-3xl text-white tracking-tight leading-none">
-                      hue
-                    </span>
-                  </div>
-                ) : (
-                  <span className="font-display font-black tracking-widest text-3xl text-white uppercase">
-                    PHILIPS
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
+    <section className="py-20 bg-slate-50 border-y border-slate-200/80 font-sans">
+      <div className="max-w-7xl mx-auto px-6">
+        {/* Section Header */}
+        <div className="text-center mb-12 space-y-3">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-600 flex items-center justify-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5" />
+            Lighting Categories
+          </p>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
+            Explore Lighting Solutions
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            Discover tailored illumination systems engineered by Philips & SK Traders for indoor, outdoor, smart, and commercial spaces.
+          </p>
         </div>
+
+        {/* Categories Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((n) => (
+              <div key={n} className="aspect-[3/4] rounded-3xl bg-slate-200 animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {categories.slice(0, 4).map((cat) => (
+              <div
+                key={cat.id}
+                onClick={() => navigate(`/lighting/${cat.slug}`)}
+                className="group relative aspect-[3/4] rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 cursor-pointer border border-slate-200 flex flex-col justify-end p-6"
+              >
+                {/* Background Image */}
+                <img
+                  src={cat.image_url || '/images/card_home_lighting.jpg'}
+                  alt={cat.name}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-108"
+                />
+
+                {/* Dark Gradient Overlay for Contrast */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent transition-opacity group-hover:opacity-90" />
+
+                {/* Card Content */}
+                <div className="relative z-10 space-y-2 text-white">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 font-mono bg-emerald-500/20 px-2.5 py-1 rounded-md border border-emerald-500/30 backdrop-blur-md">
+                    {cat.item_count_label || 'Explore Collection'}
+                  </span>
+
+                  <h3 className="text-xl font-extrabold tracking-tight group-hover:text-emerald-300 transition-colors">
+                    {cat.name}
+                  </h3>
+
+                  {cat.subtitle && (
+                    <p className="text-xs text-slate-300 line-clamp-2 font-normal leading-relaxed">
+                      {cat.subtitle}
+                    </p>
+                  )}
+
+                  <div className="pt-2 flex items-center gap-1.5 text-xs font-bold text-emerald-400 group-hover:translate-x-1 transition-transform">
+                    <span>Explore Products</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

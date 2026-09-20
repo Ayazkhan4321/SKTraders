@@ -17,7 +17,11 @@ export type FileCategory =
   | 'feature-images/solutions'
   | 'feature-images/applications'
   | 'feature-gallery/images'
-  | 'feature-catalogues/pdfs';
+  | 'feature-catalogues/pdfs'
+  | 'homepage-products/images'
+  | 'product-images'
+  | 'product-catalogues/pdfs'
+  | 'product-catalogues';
 
 export interface UploadResult {
   success: boolean;
@@ -53,7 +57,7 @@ export async function uploadFile(file: File, folder: FileCategory): Promise<Uplo
   let fileGroup: 'image' | 'video' | 'pdf' = 'image';
   if (folder.endsWith('videos')) {
     fileGroup = 'video';
-  } else if (folder.endsWith('pdfs')) {
+  } else if (folder.endsWith('pdfs') || folder.includes('catalogues')) {
     fileGroup = 'pdf';
   }
 
@@ -88,8 +92,15 @@ export async function uploadFile(file: File, folder: FileCategory): Promise<Uplo
   const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
   const filePath = `${folder}/${Date.now()}_${sanitizedName}`;
 
-  // 5. Upload to Supabase Storage Bucket ('brand-images' or 'cms_storage')
-  const bucketName = folder.startsWith('brand-images') ? 'brand-images' : 'cms_storage';
+  // 5. Upload to Supabase Storage Bucket ('brand-images', 'product-images', 'product-catalogues' or 'cms_storage')
+  let bucketName = 'cms_storage';
+  if (folder.startsWith('brand-images')) {
+    bucketName = 'brand-images';
+  } else if (folder.startsWith('product-images')) {
+    bucketName = 'product-images';
+  } else if (folder.startsWith('product-catalogues')) {
+    bucketName = 'product-catalogues';
+  }
   try {
     const { data, error } = await supabase.storage.from(bucketName).upload(filePath, file, {
       cacheControl: '3600',

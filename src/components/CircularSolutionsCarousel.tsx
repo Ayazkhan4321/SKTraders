@@ -155,7 +155,7 @@ export default function CircularSolutionsCarousel({ onOpenQuote }: CircularSolut
   const duplicatedSolutions = [...solutions, ...solutions];
 
   return (
-    <div className="relative py-16 md:py-24 bg-white text-slate-900 w-full z-20 overflow-hidden font-sans">
+    <div id="every-space" className="relative py-16 md:py-24 bg-white text-slate-900 w-full z-20 overflow-hidden font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <div className="text-center flex flex-col items-center justify-center mb-10 md:mb-14">
           <span className="text-[#0066FF] font-semibold text-sm sm:text-base tracking-wide uppercase mb-1">
