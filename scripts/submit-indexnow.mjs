@@ -30,6 +30,7 @@ async function main() {
   console.log(`📌 Found ${urls.length} URLs in sitemap.xml to submit:`);
   urls.forEach((url, i) => console.log(`   ${i + 1}. ${url}`));
 
+  // 1. Batch POST Submission
   const payload = {
     host: HOST,
     key: KEY,
@@ -40,11 +41,12 @@ async function main() {
   const endpoints = [
     'https://api.indexnow.org/indexnow',
     'https://www.bing.com/indexnow',
+    'https://yandex.com/indexnow',
   ];
 
   for (const endpoint of endpoints) {
     try {
-      console.log(`📡 Sending IndexNow payload to: ${endpoint}`);
+      console.log(`📡 Sending IndexNow POST payload to: ${endpoint}`);
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -53,14 +55,31 @@ async function main() {
         body: JSON.stringify(payload),
       });
 
+      const text = await response.text();
       if (response.ok || response.status === 200 || response.status === 202) {
-        console.log(`✅ IndexNow submission to ${endpoint} SUCCESSFUL (HTTP ${response.status})`);
+        console.log(`✅ IndexNow POST to ${endpoint} SUCCESSFUL (HTTP ${response.status}): ${text || 'Accepted'}`);
       } else {
-        const text = await response.text();
-        console.warn(`⚠️ IndexNow submission to ${endpoint} returned HTTP ${response.status}: ${text}`);
+        console.warn(`⚠️ IndexNow POST to ${endpoint} returned HTTP ${response.status}: ${text}`);
       }
     } catch (err) {
-      console.error(`❌ Error submitting to ${endpoint}:`, err.message);
+      console.error(`❌ Error submitting POST to ${endpoint}:`, err.message);
+    }
+  }
+
+  // 2. Individual GET Pings to Bing
+  console.log('📡 Sending GET ping requests to Bing for key verification...');
+  for (const url of urls) {
+    try {
+      const getUrl = `https://www.bing.com/indexnow?url=${encodeURIComponent(url)}&key=${KEY}&keyLocation=${encodeURIComponent(KEY_LOCATION)}`;
+      const res = await fetch(getUrl);
+      const resText = await res.text();
+      if (res.ok || res.status === 200 || res.status === 202) {
+        console.log(`  ✅ GET Ping [${url}] -> HTTP ${res.status}`);
+      } else {
+        console.warn(`  ⚠️ GET Ping [${url}] -> HTTP ${res.status}: ${resText}`);
+      }
+    } catch (e) {
+      console.error(`  ❌ GET Ping error for [${url}]:`, e.message);
     }
   }
 
