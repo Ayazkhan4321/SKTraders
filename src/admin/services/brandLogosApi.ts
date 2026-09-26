@@ -125,40 +125,6 @@ export async function fetchAdminBrandLogos(): Promise<FooterBrand[]> {
     }
 
     if (!data || data.length === 0) {
-      try {
-        const seedRows = INITIAL_BRAND_LOGOS.map((b) => ({
-          id: b.id,
-          brand_name: b.brand_name,
-          logo_url: b.logo_url,
-          website_url: b.website_url || null,
-          display_order: b.display_order,
-          is_active: b.is_active,
-          updated_at: b.updated_at,
-        }));
-        await supabase.from('footer_brands').upsert(seedRows);
-
-        const { data: reFetched } = await supabase
-          .from('footer_brands')
-          .select('*')
-          .order('display_order', { ascending: true });
-
-        if (reFetched && reFetched.length > 0) {
-          return reFetched.map((item: any) => ({
-            id: item.id,
-            brand_name: item.brand_name,
-            logo_url: item.logo_url || '',
-            website_url: item.website_url || '',
-            logo_height: item.logo_height || undefined,
-            logo_width: item.logo_width || undefined,
-            display_order: item.display_order ?? 1,
-            is_active: item.is_active ?? true,
-            created_at: item.created_at || new Date().toISOString(),
-            updated_at: item.updated_at || new Date().toISOString(),
-          }));
-        }
-      } catch (e) {
-        console.warn('Auto-seed footer_brands error:', e);
-      }
       return getLocalBrandLogos();
     }
 

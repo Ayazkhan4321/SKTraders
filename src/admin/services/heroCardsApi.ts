@@ -137,46 +137,6 @@ export async function fetchAdminHeroCards(): Promise<HeroCardItem[]> {
     }
 
     if (!data || data.length === 0) {
-      try {
-        const seedRows = INITIAL_HERO_CARDS.map((c) => ({
-          id: c.id,
-          title: c.title,
-          short_description: c.short_description,
-          description: c.description,
-          image_url: c.image_url,
-          pdf_url: c.pdf_url,
-          pdf_name: c.pdf_name,
-          button_text: c.button_text,
-          is_active: c.is_active,
-          display_order: c.display_order,
-          updated_at: c.updated_at,
-        }));
-        await supabase.from('hero_cards').upsert(seedRows);
-
-        const { data: reFetched } = await supabase
-          .from('hero_cards')
-          .select('*')
-          .order('display_order', { ascending: true });
-
-        if (reFetched && reFetched.length > 0) {
-          return reFetched.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            short_description: item.short_description || item.description || '',
-            description: item.description || '',
-            image_url: item.image_url || '',
-            pdf_url: item.pdf_url || '',
-            pdf_name: item.pdf_name || '',
-            button_text: item.button_text || 'View PDF',
-            is_active: item.is_active ?? true,
-            display_order: item.display_order ?? 1,
-            created_at: item.created_at || new Date().toISOString(),
-            updated_at: item.updated_at || new Date().toISOString(),
-          }));
-        }
-      } catch (e) {
-        console.warn('Auto-seed hero_cards error:', e);
-      }
       return getLocalHeroCards();
     }
 

@@ -174,47 +174,6 @@ export async function fetchAdminApplications(): Promise<ApplicationItem[]> {
       .order('display_order', { ascending: true });
 
     if (error || !data || data.length === 0) {
-      // Auto seed table if missing or empty
-      try {
-        const seedRows = INITIAL_APPLICATIONS.map((a) => ({
-          id: a.id,
-          slug: a.slug,
-          title: a.title,
-          subtitle: a.subtitle,
-          description: a.description,
-          category: a.category,
-          image_url: a.image_url,
-          key_features: a.key_features,
-          display_order: a.display_order,
-          is_active: a.is_active,
-          updated_at: a.updated_at,
-        }));
-        await supabase.from('applications').upsert(seedRows);
-
-        const { data: reFetched } = await supabase
-          .from('applications')
-          .select('*')
-          .order('display_order', { ascending: true });
-
-        if (reFetched && reFetched.length > 0) {
-          return reFetched.map((item: any) => ({
-            id: item.id,
-            slug: item.slug || item.id,
-            title: item.title,
-            subtitle: item.subtitle || '',
-            description: item.description || '',
-            category: item.category || 'General',
-            image_url: item.image_url || '',
-            key_features: Array.isArray(item.key_features) ? item.key_features : [],
-            display_order: item.display_order ?? 1,
-            is_active: item.is_active ?? true,
-            created_at: item.created_at || new Date().toISOString(),
-            updated_at: item.updated_at || new Date().toISOString(),
-          }));
-        }
-      } catch (e) {
-        console.warn('Auto-seed applications error:', e);
-      }
       return getLocalApplications();
     }
 

@@ -3,11 +3,17 @@
 
 User-agent: *
 Allow: /
-
-# Exclude Admin CMS System from Search Indexes
 Disallow: /admin
 Disallow: /admin/
 Disallow: /admin/*
 
-# Sitemap declaration
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /admin/*
+
+# IndexNow Key & Sitemap Declarations
+# IndexNow Key: 4a8e91d84b9c49018e6922883e4401a4
 Sitemap: https://www.sktradersphilipslighting.com/sitemap.xml
+

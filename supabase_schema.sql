@@ -1,6 +1,6 @@
 -- ==============================================================================
--- SK Traders Complete Supabase Database Setup & RLS Script
--- Run this script in your Supabase SQL Editor to enable production sync:
+-- SK Traders Complete Supabase Database Setup & RLS Script (Production Fixed)
+-- Run this script in your Supabase SQL Editor:
 -- https://supabase.com/dashboard/project/xyyqlmkszozyvlkmotgw/sql
 -- ==============================================================================
 
@@ -155,20 +155,45 @@ CREATE TABLE IF NOT EXISTS public.footer_brands (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. Create Additional CMS Tables
+-- 5. Create brand_section Table (Updated Schema)
 CREATE TABLE IF NOT EXISTS public.brand_section (
   id TEXT PRIMARY KEY,
+  heading TEXT,
+  description TEXT,
+  button_text TEXT,
+  button_url TEXT,
+  is_enabled BOOLEAN DEFAULT true,
   title TEXT,
   subtitle TEXT,
-  description TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+ALTER TABLE public.brand_section ADD COLUMN IF NOT EXISTS heading TEXT;
+ALTER TABLE public.brand_section ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE public.brand_section ADD COLUMN IF NOT EXISTS button_text TEXT;
+ALTER TABLE public.brand_section ADD COLUMN IF NOT EXISTS button_url TEXT;
+ALTER TABLE public.brand_section ADD COLUMN IF NOT EXISTS is_enabled BOOLEAN DEFAULT true;
+
+-- Seed default singleton row for brand_section
+INSERT INTO public.brand_section (id, heading, description, button_text, button_url, is_enabled)
+VALUES (
+  'default',
+  'The world''s leading lighting brands' || E'\n' || 'Philips' || E'\n' || 'Signify Innovation India Limited',
+  'Our products, connected systems and services unlock the extraordinary potential of light to enhance well-being and performance, elevate experiences and advance sustainability.',
+  'View all brands',
+  '/brands',
+  true
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- 6. Create brands Table (Updated Schema)
 CREATE TABLE IF NOT EXISTS public.brands (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
+  description TEXT,
   logo_url TEXT,
+  image_url TEXT,
   website_url TEXT,
   display_order INTEGER DEFAULT 1,
   is_active BOOLEAN DEFAULT true,
@@ -176,6 +201,10 @@ CREATE TABLE IF NOT EXISTS public.brands (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS image_url TEXT;
+
+-- 7. Create heroes Table
 CREATE TABLE IF NOT EXISTS public.heroes (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
@@ -190,6 +219,7 @@ CREATE TABLE IF NOT EXISTS public.heroes (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 8. Create hero_cards Table
 CREATE TABLE IF NOT EXISTS public.hero_cards (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
@@ -202,21 +232,162 @@ CREATE TABLE IF NOT EXISTS public.hero_cards (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 9. Create features Table (Updated Schema)
 CREATE TABLE IF NOT EXISTS public.features (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
-  subtitle TEXT,
-  hero_image TEXT,
+  card_image_url TEXT,
+  short_description TEXT,
+  hero_image_url TEXT,
+  hero_title TEXT,
+  hero_subtitle TEXT,
+  hero_cta_text TEXT,
+  hero_cta_link TEXT,
+  hero_overlay_opacity INTEGER DEFAULT 30,
+  hero_text_align TEXT DEFAULT 'left',
   intro_title TEXT,
   intro_description TEXT,
-  intro_image TEXT,
+  intro_image_url TEXT,
+  intro_image_position TEXT DEFAULT 'right',
+  catalogue_title TEXT,
+  catalogue_description TEXT,
+  catalogue_pdf_url TEXT,
+  catalogue_button_text TEXT,
+  catalogue_active BOOLEAN DEFAULT true,
+  contact_cta_title TEXT,
+  contact_cta_description TEXT,
+  contact_cta_button_text TEXT,
+  contact_cta_button_link TEXT,
+  contact_cta_active BOOLEAN DEFAULT true,
+  related_feature_ids JSONB DEFAULT '[]'::jsonb,
   display_order INTEGER DEFAULT 1,
+  is_active BOOLEAN DEFAULT true,
   is_published BOOLEAN DEFAULT true,
+  subtitle TEXT,
+  hero_image TEXT,
+  intro_image TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS card_image_url TEXT;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS short_description TEXT;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS hero_image_url TEXT;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS hero_title TEXT;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS hero_subtitle TEXT;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS hero_cta_text TEXT;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS hero_cta_link TEXT;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS hero_overlay_opacity INTEGER DEFAULT 30;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS hero_text_align TEXT DEFAULT 'left';
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS intro_image_url TEXT;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS intro_image_position TEXT DEFAULT 'right';
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS catalogue_title TEXT;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS catalogue_description TEXT;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS catalogue_pdf_url TEXT;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS catalogue_button_text TEXT;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS catalogue_active BOOLEAN DEFAULT true;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS contact_cta_title TEXT;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS contact_cta_description TEXT;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS contact_cta_button_text TEXT;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS contact_cta_button_link TEXT;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS contact_cta_active BOOLEAN DEFAULT true;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS related_feature_ids JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.features ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+
+-- 10. Create feature_highlights Table
+CREATE TABLE IF NOT EXISTS public.feature_highlights (
+  id TEXT PRIMARY KEY,
+  feature_id TEXT NOT NULL REFERENCES public.features(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  icon TEXT,
+  display_order INTEGER DEFAULT 1,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 11. Create feature_solutions Table
+CREATE TABLE IF NOT EXISTS public.feature_solutions (
+  id TEXT PRIMARY KEY,
+  feature_id TEXT NOT NULL REFERENCES public.features(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  image_url TEXT,
+  description TEXT,
+  link_url TEXT,
+  pdf_url TEXT,
+  display_order INTEGER DEFAULT 1,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 12. Create feature_specifications Table
+CREATE TABLE IF NOT EXISTS public.feature_specifications (
+  id TEXT PRIMARY KEY,
+  feature_id TEXT NOT NULL REFERENCES public.features(id) ON DELETE CASCADE,
+  label TEXT NOT NULL,
+  value TEXT NOT NULL,
+  explanation TEXT,
+  display_order INTEGER DEFAULT 1,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 13. Create feature_applications Table
+CREATE TABLE IF NOT EXISTS public.feature_applications (
+  id TEXT PRIMARY KEY,
+  feature_id TEXT NOT NULL REFERENCES public.features(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  image_url TEXT,
+  description TEXT,
+  display_order INTEGER DEFAULT 1,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 14. Create feature_gallery Table
+CREATE TABLE IF NOT EXISTS public.feature_gallery (
+  id TEXT PRIMARY KEY,
+  feature_id TEXT NOT NULL REFERENCES public.features(id) ON DELETE CASCADE,
+  image_url TEXT NOT NULL,
+  caption TEXT,
+  display_order INTEGER DEFAULT 1,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 15. Create feature_interactive_components Table
+CREATE TABLE IF NOT EXISTS public.feature_interactive_components (
+  id TEXT PRIMARY KEY,
+  feature_id TEXT NOT NULL REFERENCES public.features(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  tagline TEXT,
+  description TEXT,
+  human_explanation TEXT,
+  image_url TEXT,
+  icon_name TEXT,
+  exploded_offset_y NUMERIC DEFAULT 0,
+  display_order INTEGER DEFAULT 1,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 16. Create applications Table
+CREATE TABLE IF NOT EXISTS public.applications (
+  id TEXT PRIMARY KEY,
+  slug TEXT NOT NULL UNIQUE,
+  title TEXT NOT NULL,
+  subtitle TEXT,
+  description TEXT,
+  category TEXT,
+  image_url TEXT,
+  key_features JSONB DEFAULT '[]'::jsonb,
+  display_order INTEGER DEFAULT 1,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 17. Create certificates Table
 CREATE TABLE IF NOT EXISTS public.certificates (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
@@ -228,6 +399,7 @@ CREATE TABLE IF NOT EXISTS public.certificates (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 18. Create catalogues Table
 CREATE TABLE IF NOT EXISTS public.catalogues (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
@@ -240,6 +412,7 @@ CREATE TABLE IF NOT EXISTS public.catalogues (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 19. Create orders Table
 CREATE TABLE IF NOT EXISTS public.orders (
   id TEXT PRIMARY KEY,
   order_number TEXT NOT NULL,
@@ -256,16 +429,19 @@ CREATE TABLE IF NOT EXISTS public.orders (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 20. Create admins Table
 CREATE TABLE IF NOT EXISTS public.admins (
   id TEXT PRIMARY KEY,
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   name TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  role TEXT DEFAULT 'ADMIN',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ==============================================================================
--- Enable Row Level Security (RLS) & Create Public Access Policies for All Existing Tables
+-- Enable Row Level Security (RLS) & Create Public Read / Admin Write Policies
 -- ==============================================================================
 DO $$
 DECLARE
@@ -274,7 +450,9 @@ DECLARE
     'product_categories', 'products', 'product_images', 'product_specifications',
     'product_catalogues', 'related_products', 'homepage_products', 'footer_brands',
     'brand_section', 'brands', 'heroes', 'hero_cards', 'features',
-    'certificates', 'catalogues', 'orders', 'admins'
+    'feature_highlights', 'feature_solutions', 'feature_specifications',
+    'feature_applications', 'feature_gallery', 'feature_interactive_components',
+    'applications', 'certificates', 'catalogues', 'orders', 'admins'
   ];
 BEGIN
   FOREACH tbl IN ARRAY tables LOOP
@@ -289,7 +467,7 @@ BEGIN
 END $$;
 
 -- ==============================================================================
--- Create Storage Buckets and Set Public Read & Upload Access
+-- Create Storage Buckets and Set Public Access
 -- ==============================================================================
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('cms_storage', 'cms_storage', true)
@@ -307,7 +485,6 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('product-catalogues', 'product-catalogues', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Grant storage policies for object uploads and downloads
 DROP POLICY IF EXISTS "Allow public access to cms_storage" ON storage.objects;
 CREATE POLICY "Allow public access to cms_storage"
   ON storage.objects FOR ALL

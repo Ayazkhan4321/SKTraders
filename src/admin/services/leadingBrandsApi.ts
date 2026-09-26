@@ -143,25 +143,9 @@ export async function fetchAdminBrandSection(): Promise<BrandSectionContent> {
       .from('brand_section')
       .select('*')
       .eq('id', 'default')
-      .single();
+      .maybeSingle();
 
     if (error || !data) {
-      // Auto-seed table if empty or missing
-      try {
-        await supabase.from('brand_section').upsert([
-          {
-            id: INITIAL_SECTION_CONTENT.id,
-            heading: INITIAL_SECTION_CONTENT.heading,
-            description: INITIAL_SECTION_CONTENT.description,
-            button_text: INITIAL_SECTION_CONTENT.button_text,
-            button_url: INITIAL_SECTION_CONTENT.button_url,
-            is_enabled: INITIAL_SECTION_CONTENT.is_enabled,
-            updated_at: INITIAL_SECTION_CONTENT.updated_at,
-          },
-        ]);
-      } catch (e) {
-        // ignore seed error
-      }
       return getLocalBrandSection();
     }
 
@@ -212,41 +196,6 @@ export async function fetchAdminLeadingBrands(): Promise<LeadingBrand[]> {
       .order('display_order', { ascending: true });
 
     if (error || !data || data.length === 0) {
-      // Auto seed brands table if empty
-      try {
-        const seedRows = INITIAL_LEADING_BRANDS.map((b) => ({
-          id: b.id,
-          name: b.name,
-          description: b.description,
-          image_url: b.image_url,
-          website_url: b.website_url,
-          display_order: b.display_order,
-          is_active: b.is_active,
-          updated_at: b.updated_at,
-        }));
-        await supabase.from('brands').upsert(seedRows);
-
-        const { data: reFetched } = await supabase
-          .from('brands')
-          .select('*')
-          .order('display_order', { ascending: true });
-
-        if (reFetched && reFetched.length > 0) {
-          return reFetched.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            description: item.description || '',
-            image_url: item.image_url || '',
-            website_url: item.website_url || '',
-            display_order: item.display_order ?? 1,
-            is_active: item.is_active ?? true,
-            created_at: item.created_at || new Date().toISOString(),
-            updated_at: item.updated_at || new Date().toISOString(),
-          }));
-        }
-      } catch (e) {
-        console.warn('Auto-seed brands error:', e);
-      }
       return getLocalLeadingBrands();
     }
 
@@ -254,7 +203,7 @@ export async function fetchAdminLeadingBrands(): Promise<LeadingBrand[]> {
       id: item.id,
       name: item.name,
       description: item.description || '',
-      image_url: item.image_url || '',
+      image_url: item.image_url || item.logo_url || '',
       website_url: item.website_url || '',
       display_order: item.display_order ?? 1,
       is_active: item.is_active ?? true,
@@ -303,6 +252,7 @@ export async function saveLeadingBrand(
       name: brandToSave.name,
       description: brandToSave.description,
       image_url: brandToSave.image_url,
+      logo_url: brandToSave.image_url,
       website_url: brandToSave.website_url,
       display_order: brandToSave.display_order,
       is_active: brandToSave.is_active,
@@ -342,6 +292,7 @@ export async function reorderLeadingBrands(brands: LeadingBrand[]): Promise<bool
       name: b.name,
       description: b.description,
       image_url: b.image_url,
+      logo_url: b.image_url,
       website_url: b.website_url,
       display_order: b.display_order,
       is_active: b.is_active,

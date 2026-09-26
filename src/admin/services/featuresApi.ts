@@ -587,16 +587,6 @@ export async function fetchAdminFeatures(): Promise<CompleteFeatureData[]> {
       .order('display_order', { ascending: true });
 
     if (error || !featureRows || featureRows.length === 0) {
-      // Auto-seed to Supabase if empty/failed
-      try {
-        if (featureRows && featureRows.length === 0) {
-          for (const item of INITIAL_FEATURES) {
-            await saveFeature(item);
-          }
-        }
-      } catch (e) {
-        console.warn('Auto-seed features notice:', e);
-      }
       return getLocalFeatures();
     }
 

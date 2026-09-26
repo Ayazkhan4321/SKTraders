@@ -116,48 +116,6 @@ export async function fetchAdminHeroes(): Promise<HeroSlide[]> {
 
     // Auto-seed initial heroes to Supabase if table is empty
     if (!data || data.length === 0) {
-      try {
-        const seedRows = INITIAL_HEROES.map((h) => ({
-          id: h.id,
-          title: h.title,
-          subtitle: h.subtitle,
-          description: h.description,
-          media_type: h.media_type,
-          image_url: h.image_url,
-          video_url: h.video_url,
-          button_text: h.button_text,
-          button_url: h.button_url,
-          is_active: h.is_active,
-          display_order: h.display_order,
-          updated_at: h.updated_at,
-        }));
-        await supabase.from('heroes').upsert(seedRows);
-
-        const { data: reFetched } = await supabase
-          .from('heroes')
-          .select('*')
-          .order('display_order', { ascending: true });
-
-        if (reFetched && reFetched.length > 0) {
-          return reFetched.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            subtitle: item.subtitle || '',
-            description: item.description || '',
-            media_type: item.media_type || (item.video_url ? 'video' : 'image'),
-            image_url: item.image_url || '',
-            video_url: item.video_url || '',
-            button_text: item.button_text || 'Explore',
-            button_url: item.button_url || '#',
-            is_active: item.is_active ?? true,
-            display_order: item.display_order ?? 1,
-            created_at: item.created_at || new Date().toISOString(),
-            updated_at: item.updated_at || new Date().toISOString(),
-          }));
-        }
-      } catch (e) {
-        console.warn('Auto-seed heroes error:', e);
-      }
       return getLocalHeroes();
     }
 

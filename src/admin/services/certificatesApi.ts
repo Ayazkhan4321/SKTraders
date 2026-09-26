@@ -84,40 +84,6 @@ export async function fetchAdminCertificates(): Promise<CertificateItem[]> {
     }
 
     if (!data || data.length === 0) {
-      try {
-        const seedRows = INITIAL_CERTIFICATES.map((c) => ({
-          id: c.id,
-          title: c.title,
-          description: c.description,
-          image_url: c.image_url,
-          pdf_url: c.pdf_url,
-          is_active: c.is_active,
-          display_order: c.display_order,
-          updated_at: c.updated_at,
-        }));
-        await supabase.from('certificates').upsert(seedRows);
-
-        const { data: reFetched } = await supabase
-          .from('certificates')
-          .select('*')
-          .order('display_order', { ascending: true });
-
-        if (reFetched && reFetched.length > 0) {
-          return reFetched.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            description: item.description || '',
-            image_url: item.image_url || '',
-            pdf_url: item.pdf_url || '',
-            is_active: item.is_active ?? true,
-            display_order: item.display_order ?? 1,
-            created_at: item.created_at || new Date().toISOString(),
-            updated_at: item.updated_at || new Date().toISOString(),
-          }));
-        }
-      } catch (e) {
-        console.warn('Auto-seed certificates error:', e);
-      }
       return getLocalCertificates();
     }
 

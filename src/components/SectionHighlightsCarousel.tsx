@@ -47,76 +47,80 @@ export default function SectionHighlightsCarousel({ onOpenQuote }: SectionHighli
   const progressPercent = ((activeIndex + 1) / highlights.length) * 100;
 
   return (
-    <section id="highlights" className="py-20 bg-white border-b border-slate-100">
-      <div className="max-w-7xl mx-auto px-6 md:px-12">
-        {/* Header matching Screenshot 4 */}
-        <div className="mb-10 text-left">
-          <h2 className="text-3xl sm:text-5xl font-display font-bold text-slate-900 tracking-tight">
-            Signify highlights
-          </h2>
+    <section className="py-16 bg-slate-900 text-white overflow-hidden relative" id="highlights">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+          <div>
+            <span className="text-xs font-bold text-[#00e676] uppercase tracking-widest block mb-2">
+              Corporate & Industry Highlights
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-display font-extrabold tracking-tight text-white">
+              Latest Insights & Innovations from Signify
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handlePrev}
+                aria-label="Previous Highlight"
+                className="w-10 h-10 rounded-full border border-slate-700 hover:border-[#00e676] flex items-center justify-center transition-colors text-slate-300 hover:text-white"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handleNext}
+                aria-label="Next Highlight"
+                className="w-10 h-10 rounded-full border border-slate-700 hover:border-[#00e676] flex items-center justify-center transition-colors text-slate-300 hover:text-white"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Carousel Grid Cards matching Screenshot 4 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {highlights.slice(activeIndex, activeIndex + 3).concat(
-            highlights.slice(0, Math.max(0, (activeIndex + 3) - highlights.length))
-          ).map((item) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {highlights.map((item, idx) => (
             <div
               key={item.id}
               onClick={onOpenQuote}
-              className="group cursor-pointer relative aspect-[16/10] overflow-hidden bg-slate-900 signify-card shadow-sm hover:shadow-lg"
+              className={`group cursor-pointer rounded-2xl overflow-hidden bg-slate-800/80 border transition-all duration-300 ${
+                idx === activeIndex
+                  ? 'border-[#00e676] shadow-lg shadow-[#00e676]/10 -translate-y-1'
+                  : 'border-slate-700/60 hover:border-slate-500'
+              }`}
             >
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-90"
-              />
-
-              {/* Dark Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"></div>
-
-              {/* Tag & Title matching Screenshot 4 */}
-              <div className="absolute bottom-6 left-6 right-6 z-10 space-y-1">
-                {item.tag && (
-                  <span className="text-xs text-slate-300 font-medium tracking-wide block">
-                    {item.tag}
-                  </span>
-                )}
-                <h3 className="text-lg sm:text-xl font-bold text-white leading-snug group-hover:text-[#00e676] transition-colors">
+              <div className="h-48 overflow-hidden relative">
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-bold text-[#00e676] tracking-wider uppercase">
+                  {item.tag}
+                </div>
+              </div>
+              <div className="p-5">
+                <h3 className="text-base font-bold text-white group-hover:text-[#00e676] transition-colors line-clamp-2 leading-snug">
                   {item.title}
                 </h3>
+                <p className="mt-3 text-xs font-semibold text-slate-400 group-hover:text-slate-200 flex items-center gap-1">
+                  <span>Read full announcement</span>
+                  <span className="group-hover:translate-x-1 transition-transform">→</span>
+                </p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Progress Bar & Navigation Controls matching Screenshot 4 */}
-        <div className="flex items-center gap-6 pt-4">
-          <button
-            onClick={handlePrev}
-            className="p-2 text-slate-600 hover:text-slate-950 transition-colors"
-            title="Previous highlight"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-
-          {/* Progress Bar Track */}
-          <div className="flex-1 h-[3px] bg-slate-200 relative rounded-full overflow-hidden">
-            <div
-              className="absolute top-0 left-0 bottom-0 bg-slate-900 transition-all duration-300 rounded-full"
-              style={{ width: `${progressPercent}%` }}
-            ></div>
-          </div>
-
-          <button
-            onClick={handleNext}
-            className="p-2 text-slate-600 hover:text-slate-950 transition-colors"
-            title="Next highlight"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
+        <div className="mt-8 w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+          <div
+            className="bg-[#00e676] h-full transition-all duration-300"
+            style={{ width: `${progressPercent}%` }}
+          />
         </div>
       </div>
     </section>
   );
 }
+
